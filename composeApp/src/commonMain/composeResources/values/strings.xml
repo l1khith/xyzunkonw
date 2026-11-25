@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_title">SplitSignal</string>
+    <string name="mode_solo">Solo</string>
+    <string name="mode_host">Host Wi-Fi</string>
+    <string name="mode_join">Join Wi-Fi</string>
+    <string name="stage_calibration">Puzzle 0 · Warm-Up</string>
+    <string name="untimed">Untimed</string>
+    <string name="calibration_banner">Warm-Up: Use the Clue Sheet to deduce each tile on the 3×3 Number Grid.</string>
+    <string name="analyst_terminal">Clue Sheet</string>
+    <string name="analyst_subtitle">Target sums and deduction clues</string>
+    <string name="operator_terminal">Number Grid</string>
+    <string name="operator_subtitle">Tap any tile (+1)</string>
+    <string name="stage_cleared">Solved · Next Puzzle</string>
+    <string name="signal_lost">Out of Time</string>
+    <string name="next_stage">Solved · Next Puzzle</string>
+    <string name="retry_run">Try Again</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting...</string>
+    <string name="cancel">Cancel</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="reset">Reset</string>
+    <string name="new_code">New Code</string>
+    <string name="role_analyst">Clue Sheet</string>
+    <string name="role_operator">Number Grid</string>
+    <string name="clue_sheet">Clue Sheet</string>
+    <string name="number_grid">Number Grid</string>
+    <string name="tap_any_tile">Tap any tile (+1)</string>
+    <string name="solved_next_puzzle">Solved · Next Puzzle</string>
+</resources>

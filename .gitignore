@@ -1,0 +1,22 @@
+# Project exclude paths
+/.gradle/
+/build/
+/build-logic/.gradle/
+/build-logic/convention/build/
+/build-logic/convention/build/classes/kotlin/main/
+/composeApp/build/
+/composeApp/build/classes/kotlin/desktop/main/
+/composeApp/build/classes/kotlin/wasmJs/main/
+/core/domain/build/
+/core/domain/build/classes/kotlin/desktop/main/
+/core/domain/build/classes/kotlin/desktop/test/
+/core/domain/build/classes/kotlin/wasmJs/main/
+/core/network/build/
+/core/network/build/classes/kotlin/desktop/main/
+/core/network/build/classes/kotlin/wasmJs/main/
+/feature/conduit/build/
+/feature/conduit/build/classes/kotlin/desktop/main/
+/feature/conduit/build/classes/kotlin/wasmJs/main/
+/feature/harmonic/build/
+/feature/harmonic/build/classes/kotlin/desktop/main/
+/feature/harmonic/build/classes/kotlin/wasmJs/main/

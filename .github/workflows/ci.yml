@@ -1,0 +1,33 @@
+name: SplitSignal CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Verify (Desktop + Android + WasmJs)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Desktop tests, Desktop compilation, Android Debug APK build, and WasmJs compilation
+        run: ./gradlew :composeApp:desktopTest :composeApp:desktopMainClasses :composeApp:assembleDebug :composeApp:compileKotlinWasmJs --no-daemon

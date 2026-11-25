@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="conduit-wasm-js">
+    <output-path>$PROJECT_DIR$/feature/conduit/build/libs</output-path>
+    <root id="archive" name="conduit-wasm-js.jar">
+      <element id="module-output" name="SplitSignal.feature.conduit.wasmJsMain" />
+    </root>
+  </artifact>
+</component>

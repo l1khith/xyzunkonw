@@ -58,6 +58,7 @@ import com.splitsignal.core.domain.TransportConnectionState
 import com.splitsignal.core.domain.TransportFactory
 import com.splitsignal.core.domain.UserIdentity
 import com.splitsignal.core.domain.UserIdentityStore
+import com.splitsignal.app.platform.AppLoggerBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -315,11 +316,15 @@ class SplitSignalStateHolder(
         progressionJob = scope.launch {
             progressionStore.state.collect { progression ->
                 _uiState.update { it.copy(progressionState = progression) }
+                AppLoggerBridge.setUserProperty("elo_rating", progression.elo.toString())
+                AppLoggerBridge.setUserProperty("streak_days", progression.streakDays.toString())
             }
         }
         identityJob = scope.launch {
             identityStore.identity.collect { identity ->
                 _uiState.update { it.copy(userIdentity = identity) }
+                AppLoggerBridge.setUserId(identity.userId)
+                AppLoggerBridge.setUserProperty("avatar_id", identity.avatarAccentIndex.toString())
                 refreshPeerPresence()
             }
         }
@@ -347,6 +352,7 @@ class SplitSignalStateHolder(
      * Switches the active bottom-bar [MainTab] without altering manual network scanning state.
      */
     fun selectMainTab(tab: MainTab) {
+        AppLoggerBridge.logScreen("TAB_${tab.name}")
         _uiState.update { it.copy(activeTab = tab) }
     }
 
@@ -738,6 +744,7 @@ class SplitSignalStateHolder(
      * Returns to the Games Hub and cleanly stops any active gameplay, hosting, or discovery jobs.
      */
     fun openHub() {
+        AppLoggerBridge.logScreen("SCREEN_HUB")
         stopLanActivity()
         disposeCurrentSession()
         _uiState.update { current ->
@@ -759,6 +766,7 @@ class SplitSignalStateHolder(
      * Launches the 6×6 Medium Daily Sprint Sudoku challenge.
      */
     fun startDailySprint() {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "SUDOKU_DAILY_SPRINT"))
         val progression = progressionStore.state.value
         val seed = Fnv1a.hash32("DAILY_SPRINT:${progression.streakDays}:${progression.solvedCount}")
         launchSoloSudoku(
@@ -776,6 +784,7 @@ class SplitSignalStateHolder(
         size: SudokuSize,
         difficulty: SudokuDifficulty = SudokuDifficulty.MEDIUM,
     ) {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "SUDOKU", "size" to size.name, "difficulty" to difficulty.name))
         sudokuNonce++
         val seed = Fnv1a.hash32("SUDOKU_SOLO:${size.name}:${difficulty.name}:$sudokuNonce")
         launchSoloSudoku(
@@ -812,6 +821,7 @@ class SplitSignalStateHolder(
      * Opens the Vault Shop screen for themes, streak freezes, and hint tokens.
      */
     fun openVaultShop() {
+        AppLoggerBridge.logScreen("SCREEN_VAULT")
         stopLanActivity()
         disposeCurrentSession()
         _uiState.update { current ->
@@ -834,6 +844,7 @@ class SplitSignalStateHolder(
      * Opens the Stats & Cognitive Profile screen.
      */
     fun openStatsProfile() {
+        AppLoggerBridge.logScreen("SCREEN_PROFILE")
         stopLanActivity()
         disposeCurrentSession()
         _uiState.update { current ->
@@ -876,6 +887,7 @@ class SplitSignalStateHolder(
         isDailyStep: Boolean = false,
         seedOverride: UInt? = null,
     ) {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "CROSS_MATH", "size" to size.name, "is_daily" to isDailyStep))
         stopLanActivity()
         disposeCurrentSession()
         matiksNonce++
@@ -912,6 +924,7 @@ class SplitSignalStateHolder(
         isDailyStep: Boolean = false,
         seedOverride: UInt? = null,
     ) {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "MATH_MAZE", "dimension" to dimension, "is_daily" to isDailyStep))
         stopLanActivity()
         disposeCurrentSession()
         matiksNonce++
@@ -948,6 +961,7 @@ class SplitSignalStateHolder(
         isDailyStep: Boolean = false,
         seedOverride: UInt? = null,
     ) {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "KENKEN", "size" to size.name, "is_daily" to isDailyStep))
         stopLanActivity()
         disposeCurrentSession()
         matiksNonce++
@@ -984,6 +998,7 @@ class SplitSignalStateHolder(
         isDailyStep: Boolean = false,
         seedOverride: UInt? = null,
     ) {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "MEMORY_MATRIX", "dimension" to dimension, "is_daily" to isDailyStep))
         stopLanActivity()
         disposeCurrentSession()
         matiksNonce++
@@ -1019,6 +1034,7 @@ class SplitSignalStateHolder(
         isDailyStep: Boolean = false,
         seedOverride: UInt? = null,
     ) {
+        AppLoggerBridge.logEvent("game_start", mapOf("game_type" to "MINDSNAP", "is_daily" to isDailyStep))
         stopLanActivity()
         disposeCurrentSession()
         matiksNonce++
@@ -2397,7 +2413,7 @@ class SplitSignalStateHolder(
                 } else {
                     null
                 }
-                progressionStore.recordSolve(
+                val r = progressionStore.recordSolve(
                     size = state.size,
                     difficulty = state.difficulty,
                     elapsedSeconds = state.elapsedSeconds,
@@ -2405,6 +2421,13 @@ class SplitSignalStateHolder(
                     isDailySprint = state.isDailySprint,
                     isRaceWin = isRaceWin,
                 )
+                AppLoggerBridge.logGameCompleted(
+                    gameType = if (state.isDailySprint) "SUDOKU_DAILY_SPRINT" else "SUDOKU_${state.size.name}",
+                    score = r.xpEarned,
+                    timeSeconds = state.elapsedSeconds,
+                    eloChange = r.eloDelta,
+                )
+                r
             } else {
                 null
             }
@@ -2466,7 +2489,7 @@ class SplitSignalStateHolder(
             val reward = if (justSolved) {
                 val isWin = if (state.isRace) state.opponentProgress?.finished != true else null
                 val effectiveType = if (_uiState.value.isTriathlonActive) GameType.TRIATHLON else GameType.CROSS_MATH
-                progressionStore.recordModeSolve(
+                val r = progressionStore.recordModeSolve(
                     gameType = effectiveType,
                     elapsedSeconds = state.elapsedSeconds,
                     moves = state.moves,
@@ -2475,6 +2498,13 @@ class SplitSignalStateHolder(
                     isDailyStep = state.isDailyStep,
                     isRaceWin = isWin,
                 )
+                AppLoggerBridge.logGameCompleted(
+                    gameType = effectiveType.name,
+                    score = r.xpEarned,
+                    timeSeconds = state.elapsedSeconds,
+                    eloChange = r.eloDelta,
+                )
+                r
             } else null
             _uiState.update {
                 it.copy(
@@ -2492,7 +2522,7 @@ class SplitSignalStateHolder(
             prevSolved = state.isSolved
             val reward = if (justSolved) {
                 val isWin = if (state.isRace) state.opponentProgress?.finished != true else null
-                progressionStore.recordModeSolve(
+                val r = progressionStore.recordModeSolve(
                     gameType = GameType.MATH_MAZE,
                     elapsedSeconds = state.elapsedSeconds,
                     moves = state.moves,
@@ -2501,6 +2531,13 @@ class SplitSignalStateHolder(
                     isDailyStep = state.isDailyStep,
                     isRaceWin = isWin,
                 )
+                AppLoggerBridge.logGameCompleted(
+                    gameType = "MATH_MAZE",
+                    score = r.xpEarned,
+                    timeSeconds = state.elapsedSeconds,
+                    eloChange = r.eloDelta,
+                )
+                r
             } else null
             _uiState.update {
                 it.copy(
@@ -2518,7 +2555,7 @@ class SplitSignalStateHolder(
             prevSolved = state.isSolved
             val reward = if (justSolved) {
                 val isWin = if (state.isRace) state.opponentProgress?.finished != true else null
-                progressionStore.recordModeSolve(
+                val r = progressionStore.recordModeSolve(
                     gameType = GameType.KENKEN,
                     elapsedSeconds = state.elapsedSeconds,
                     moves = state.moves,
@@ -2527,6 +2564,13 @@ class SplitSignalStateHolder(
                     isDailyStep = state.isDailyStep,
                     isRaceWin = isWin,
                 )
+                AppLoggerBridge.logGameCompleted(
+                    gameType = "KENKEN",
+                    score = r.xpEarned,
+                    timeSeconds = state.elapsedSeconds,
+                    eloChange = r.eloDelta,
+                )
+                r
             } else null
             _uiState.update {
                 it.copy(
@@ -2549,7 +2593,7 @@ class SplitSignalStateHolder(
             }
             val reward = if (justSolved) {
                 val isWin = if (state.isRace) state.opponentProgress?.finished != true else null
-                progressionStore.recordModeSolve(
+                val r = progressionStore.recordModeSolve(
                     gameType = GameType.MEMORY_MATRIX,
                     elapsedSeconds = state.elapsedSeconds,
                     moves = state.moves,
@@ -2558,6 +2602,13 @@ class SplitSignalStateHolder(
                     isDailyStep = state.isDailyStep,
                     isRaceWin = isWin,
                 )
+                AppLoggerBridge.logGameCompleted(
+                    gameType = "MEMORY_MATRIX",
+                    score = r.xpEarned,
+                    timeSeconds = state.elapsedSeconds,
+                    eloChange = r.eloDelta,
+                )
+                r
             } else null
             _uiState.update {
                 it.copy(
@@ -2580,7 +2631,7 @@ class SplitSignalStateHolder(
             }
             val reward = if (justFinished) {
                 val isWin = if (state.isRace) state.opponentProgress?.finished != true else null
-                progressionStore.recordModeSolve(
+                val r = progressionStore.recordModeSolve(
                     gameType = GameType.MINDSNAP,
                     elapsedSeconds = state.elapsedSeconds,
                     moves = state.moves,
@@ -2590,6 +2641,13 @@ class SplitSignalStateHolder(
                     isDailyStep = state.isDailyStep,
                     isRaceWin = isWin,
                 )
+                AppLoggerBridge.logGameCompleted(
+                    gameType = "MINDSNAP",
+                    score = r.xpEarned,
+                    timeSeconds = state.elapsedSeconds,
+                    eloChange = r.eloDelta,
+                )
+                r
             } else null
             _uiState.update {
                 it.copy(

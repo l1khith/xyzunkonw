@@ -32,6 +32,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import splitsignal.composeapp.generated.resources.ic_arrow_back
 import splitsignal.composeapp.generated.resources.ic_attach_file
+import splitsignal.composeapp.generated.resources.ic_attach_money
 import splitsignal.composeapp.generated.resources.ic_calendar_today
 import splitsignal.composeapp.generated.resources.ic_check
 import splitsignal.composeapp.generated.resources.ic_check_circle
@@ -51,6 +52,12 @@ import splitsignal.composeapp.generated.resources.ic_schedule
 import splitsignal.composeapp.generated.resources.ic_search
 import splitsignal.composeapp.generated.resources.ic_send
 import splitsignal.composeapp.generated.resources.ic_settings
+import splitsignal.composeapp.generated.resources.ic_settings_outline
+import splitsignal.composeapp.generated.resources.ic_shield
+import splitsignal.composeapp.generated.resources.ic_sudoku_grid
+import splitsignal.composeapp.generated.resources.ic_cross_math
+import splitsignal.composeapp.generated.resources.ic_kenken
+import splitsignal.composeapp.generated.resources.ic_mindsnap
 import splitsignal.composeapp.generated.resources.ic_sports_esports
 import splitsignal.composeapp.generated.resources.ic_square
 import splitsignal.composeapp.generated.resources.ic_star
@@ -73,6 +80,8 @@ object SsIcons {
     val Send: DrawableResource = Res.drawable.ic_send
     val Attach: DrawableResource = Res.drawable.ic_attach_file
     val StreakFire: DrawableResource = Res.drawable.ic_local_fire_department
+    val Coin: DrawableResource = Res.drawable.ic_attach_money
+    val Shield: DrawableResource = Res.drawable.ic_shield
     val Check: DrawableResource = Res.drawable.ic_check
     val CheckCircle: DrawableResource = Res.drawable.ic_check_circle
     val Close: DrawableResource = Res.drawable.ic_close
@@ -83,6 +92,11 @@ object SsIcons {
     val Search: DrawableResource = Res.drawable.ic_search
     val Notifications: DrawableResource = Res.drawable.ic_notifications_active
     val Settings: DrawableResource = Res.drawable.ic_settings
+    val SettingsOutline: DrawableResource = Res.drawable.ic_settings_outline
+    val SudokuGrid: DrawableResource = Res.drawable.ic_sudoku_grid
+    val CrossMath: DrawableResource = Res.drawable.ic_cross_math
+    val KenKen: DrawableResource = Res.drawable.ic_kenken
+    val MindSnap: DrawableResource = Res.drawable.ic_mindsnap
     val Trophy: DrawableResource = Res.drawable.ic_star
     val TrendUp: DrawableResource = Res.drawable.ic_trending_up
     val Schedule: DrawableResource = Res.drawable.ic_schedule

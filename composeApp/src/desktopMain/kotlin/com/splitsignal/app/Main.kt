@@ -74,6 +74,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = "SplitSignal — Cooperative Math Deduction",
+            icon = androidx.compose.ui.res.painterResource("icon.png"),
             state = rememberWindowState(width = 1200.dp, height = 820.dp),
             onKeyEvent = { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Escape) {

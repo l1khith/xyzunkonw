@@ -60,7 +60,7 @@ class MathPuzzleEngineTest {
         assertFalse(initialClues[1].isSatisfied)
 
         assertEquals(2, initialClues[2].id)
-        assertEquals("Main diagonal (↘) sum = 11", initialClues[2].statement)
+        assertEquals("Main diagonal sum = 11", initialClues[2].statement)
         assertEquals("Current: 11", initialClues[2].liveStatus)
         assertTrue(initialClues[2].isSatisfied)
 

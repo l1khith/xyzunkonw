@@ -28,12 +28,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,6 +75,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
 import com.splitsignal.core.domain.GameType
 import com.splitsignal.core.domain.OpponentProgress
 import com.splitsignal.core.domain.ProgressionState
@@ -214,7 +218,7 @@ fun MatiksTopBar(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MatiksChipButton(label = "← Hub", onClick = onExit)
+            MatiksChipButton(label = "Hub", onClick = onExit, leadingIcon = SsIcons.Back)
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = title,
@@ -626,7 +630,18 @@ fun CognitiveRewardOverlay(
                             border = BorderStroke(1.dp, SplitSignalColors.BorderSubtle),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = SplitSignalColors.TextPrimary),
                         ) {
-                            Text(if (copied) "✓ Copied Scorecard" else "Copy Shareable Scorecard")
+                            if (copied) {
+                                SsIcon(
+                                    icon = SsIcons.MaterialCheck,
+                                    contentDescription = null,
+                                    tint = SplitSignalColors.AccentEmerald,
+                                    iconSize = 14.dp,
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Copied Scorecard")
+                            } else {
+                                Text("Copy Shareable Scorecard")
+                            }
                         }
 
                         Row(
@@ -683,7 +698,6 @@ fun StatsProfileScreen(
     progression: ProgressionState,
     widthSizeClass: WindowWidthSizeClass,
     onBack: () -> Unit,
-    onOpenVault: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val maxContentWidth = if (widthSizeClass == WindowWidthSizeClass.Expanded) 780.dp else 540.dp
@@ -705,13 +719,12 @@ fun StatsProfileScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MatiksChipButton(label = "← Hub", onClick = onBack)
+            MatiksChipButton(label = "Hub", onClick = onBack, leadingIcon = SsIcons.Back)
             Text(
                 text = "Profile",
                 style = MaterialTheme.typography.titleMedium,
                 color = SplitSignalColors.TextPrimary,
             )
-            MatiksChipButton(label = "Vault", accentColor = SplitSignalColors.AccentAmber, onClick = onOpenVault)
         }
 
         Column(
@@ -824,6 +837,7 @@ fun MatiksChipButton(
     onClick: () -> Unit,
     accentColor: Color = SplitSignalColors.TextPrimary,
     enabled: Boolean = true,
+    leadingIcon: org.jetbrains.compose.resources.DrawableResource? = null,
 ) {
     TactileTile(
         onClick = onClick,
@@ -831,13 +845,26 @@ fun MatiksChipButton(
         backgroundColor = SplitSignalColors.SurfaceCard,
         cornerRadius = 8.dp,
     ) {
-        Text(
-            text = label,
-            style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-            color = if (enabled) accentColor else SplitSignalColors.TextMuted,
-            maxLines = 1,
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-        )
+        ) {
+            if (leadingIcon != null) {
+                SsIcon(
+                    icon = leadingIcon,
+                    contentDescription = null,
+                    tint = if (enabled) accentColor else SplitSignalColors.TextMuted,
+                    iconSize = 13.dp,
+                )
+            }
+            Text(
+                text = label,
+                style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
+                color = if (enabled) accentColor else SplitSignalColors.TextMuted,
+                maxLines = 1,
+            )
+        }
     }
 }
 

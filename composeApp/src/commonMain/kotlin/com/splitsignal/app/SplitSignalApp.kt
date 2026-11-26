@@ -1,4 +1,4 @@
-package com.splitsignal.app
+﻿package com.splitsignal.app
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -65,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -82,7 +83,6 @@ import com.splitsignal.app.presentation.LinkTab
 import com.splitsignal.app.presentation.MainTab
 import com.splitsignal.app.presentation.SplitSignalAppUiState
 import com.splitsignal.app.presentation.SplitSignalStateHolder
-import com.splitsignal.app.ui.BattleshipScreen
 import com.splitsignal.app.ui.CrossMathScreen
 import com.splitsignal.app.ui.DirectChatSheet
 import com.splitsignal.app.ui.GamesHubScreen
@@ -103,7 +103,12 @@ import com.splitsignal.app.ui.SplitSignalTheme
 import com.splitsignal.app.ui.StatsProfileScreen
 import com.splitsignal.app.ui.SudokuScreen
 import com.splitsignal.app.ui.TactileTile
-import com.splitsignal.app.ui.VaultShopScreen
+import com.splitsignal.app.ui.design.SsBottomNav
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
+import com.splitsignal.app.ui.design.SsNavItem
+import com.splitsignal.app.ui.design.SsNavRail
+import org.jetbrains.compose.resources.DrawableResource
 import com.splitsignal.core.domain.GameType
 import com.splitsignal.core.domain.SyncPacket
 import com.splitsignal.core.domain.UserIdentityStore
@@ -240,16 +245,6 @@ fun SplitSignalApp(
                             holder = resolvedHolder,
                         )
 
-                        AppScreen.BATTLESHIP_AI -> BattleshipScreen(
-                            state = uiState.battleshipState,
-                            roomCode = null,
-                            widthSizeClass = widthSizeClass,
-                            onFire = resolvedHolder::fireBattleship,
-                            onSonar = resolvedHolder::sonarBattleship,
-                            onRestart = resolvedHolder::restartBattleship,
-                            onExit = resolvedHolder::openHub,
-                        )
-
                         AppScreen.SUDOKU_SOLO -> SudokuScreen(
                             state = uiState.sudokuState,
                             theme = uiState.progressionState.activeTheme,
@@ -285,7 +280,6 @@ fun SplitSignalApp(
                             progression = uiState.progressionState,
                             reward = uiState.lastSolveReward,
                             roomCode = if (uiState.crossMathState.isRace) uiState.activeRoomCode else null,
-                            isTriathlon = uiState.isTriathlonActive,
                             widthSizeClass = widthSizeClass,
                             onSelectCell = resolvedHolder::selectCrossMathCell,
                             onPlaceBankTile = resolvedHolder::placeCrossMathBankTile,
@@ -329,7 +323,6 @@ fun SplitSignalApp(
                             progression = uiState.progressionState,
                             reward = uiState.lastSolveReward,
                             roomCode = if (uiState.memoryMatrixState.isRace) uiState.activeRoomCode else null,
-                            isTriathlon = uiState.isTriathlonActive,
                             widthSizeClass = widthSizeClass,
                             onTapCell = resolvedHolder::tapMemoryMatrixCell,
                             onPeekHint = resolvedHolder::useMemoryMatrixPeek,
@@ -342,7 +335,6 @@ fun SplitSignalApp(
                             progression = uiState.progressionState,
                             reward = uiState.lastSolveReward,
                             roomCode = if (uiState.mindsnapState.isRace) uiState.activeRoomCode else null,
-                            isTriathlon = uiState.isTriathlonActive,
                             widthSizeClass = widthSizeClass,
                             onSubmitAnswer = resolvedHolder::submitMindsnapAnswer,
                             onUseHint = resolvedHolder::useMindsnapHint,
@@ -355,17 +347,6 @@ fun SplitSignalApp(
                             progression = uiState.progressionState,
                             widthSizeClass = widthSizeClass,
                             onBack = resolvedHolder::openHub,
-                            onOpenVault = resolvedHolder::openVaultShop,
-                        )
-
-                        AppScreen.VAULT_SHOP -> VaultShopScreen(
-                            progression = uiState.progressionState,
-                            rankTitle = uiState.progressionState.rankTitle,
-                            widthSizeClass = widthSizeClass,
-                            onBack = resolvedHolder::openHub,
-                            onBuyStreakFreeze = resolvedHolder::buyStreakFreeze,
-                            onBuyHintToken = resolvedHolder::buyHintToken,
-                            onBuyOrSelectTheme = resolvedHolder::buyOrSelectTheme,
                         )
 
                         AppScreen.COOP_ACTIVE -> when (uiState.selectedGameType) {
@@ -373,16 +354,6 @@ fun SplitSignalApp(
                                 uiState = uiState,
                                 widthSizeClass = widthSizeClass,
                                 holder = resolvedHolder,
-                            )
-
-                            GameType.BATTLESHIP -> BattleshipScreen(
-                                state = uiState.battleshipState,
-                                roomCode = uiState.activeRoomCode,
-                                widthSizeClass = widthSizeClass,
-                                onFire = resolvedHolder::fireBattleship,
-                                onSonar = resolvedHolder::sonarBattleship,
-                                onRestart = resolvedHolder::restartBattleship,
-                                onExit = resolvedHolder::openHub,
                             )
 
                             GameType.SUDOKU_6X6, GameType.SUDOKU_9X9 -> SudokuScreen(
@@ -405,9 +376,11 @@ fun SplitSignalApp(
                             GameType.KENKEN,
                             GameType.MEMORY_MATRIX,
                             GameType.MINDSNAP,
-                            GameType.TRIATHLON,
                             -> Unit
+                            else -> Unit
                         }
+
+                        else -> Unit
                     }
                 }
 
@@ -416,8 +389,6 @@ fun SplitSignalApp(
                         sessionState = uiState.chatUiState,
                         mediaBridge = mediaBridge,
                         onSendMessage = resolvedHolder::sendChatMessage,
-                        onSendSticker = resolvedHolder::sendStickerMessage,
-                        onSendVoiceNote = resolvedHolder::offerFileToActivePeer,
                         onTypingChanged = resolvedHolder::sendTypingIndicator,
                         onAttachFile = {
                             fileBridge.pickFile { picked ->
@@ -534,6 +505,8 @@ private fun AppShell(
                 ContextualTopBar(
                     activeTab = uiState.activeTab,
                     streakDays = uiState.progressionState.streakDays,
+                    coins = uiState.progressionState.coins,
+                    elo = uiState.progressionState.elo,
                     hasPendingNotifications = hasPendingNotifications,
                     onNotificationClick = onNotificationClick,
                     onOpenAddFriend = onOpenAddFriend,
@@ -551,7 +524,6 @@ private fun AppShell(
                 if (onLaunchDualDesktopDemo != null) {
                     DesktopJudgeDemoBar(
                         onLaunchMath = { onLaunchDualDesktopDemo(GameType.MATH) },
-                        onLaunchBattleship = { onLaunchDualDesktopDemo(GameType.BATTLESHIP) },
                     )
                 }
             }
@@ -561,6 +533,8 @@ private fun AppShell(
             ContextualTopBar(
                 activeTab = uiState.activeTab,
                 streakDays = uiState.progressionState.streakDays,
+                coins = uiState.progressionState.coins,
+                elo = uiState.progressionState.elo,
                 hasPendingNotifications = hasPendingNotifications,
                 onNotificationClick = onNotificationClick,
                 onOpenAddFriend = onOpenAddFriend,
@@ -578,12 +552,12 @@ private fun AppShell(
             if (onLaunchDualDesktopDemo != null) {
                 DesktopJudgeDemoBar(
                     onLaunchMath = { onLaunchDualDesktopDemo(GameType.MATH) },
-                    onLaunchBattleship = { onLaunchDualDesktopDemo(GameType.BATTLESHIP) },
                 )
             }
             MobileBottomNavBar(
                 activeTab = uiState.activeTab,
                 onSelectTab = onSelectTab,
+                onAddFriendClick = onOpenAddFriend,
             )
         }
     }
@@ -617,12 +591,7 @@ private fun HubTabContent(
                 onPlayKenKen = { holder.startKenKen() },
                 onPlayMemoryMatrix = { holder.startMemoryMatrix() },
                 onPlayMindsnap = { holder.startMindsnap() },
-                onOpenVaultShop = holder::openVaultShop,
                 onOpenStatsProfile = holder::openStatsProfile,
-                onPlayMathSolo = holder::startMathSolo,
-                onHostMathCoop = { holder.openLocalLink(GameType.MATH, LinkTab.HOST) },
-                onPlayBattleshipAi = holder::startBattleshipAi,
-                onHostBattleshipCoop = { holder.openLocalLink(GameType.BATTLESHIP, LinkTab.HOST) },
             )
 
             MainTab.NETWORK -> NetworkScreen(
@@ -651,8 +620,8 @@ private fun HubTabContent(
                 onUpdateDisplayName = holder::updateDisplayName,
                 onCycleAvatarAccent = holder::cycleAvatarAccent,
                 onOpenCognitiveStats = holder::openStatsProfile,
-                onOpenVault = holder::openVaultShop,
                 onUpdatePrivacyMode = holder::updatePrivacyMode,
+                transfers = uiState.chatUiState.transfers,
             )
         }
     }
@@ -662,6 +631,8 @@ private fun HubTabContent(
 private fun ContextualTopBar(
     activeTab: MainTab,
     streakDays: Int,
+    coins: Int,
+    elo: Int,
     hasPendingNotifications: Boolean,
     onNotificationClick: () -> Unit,
     onOpenAddFriend: () -> Unit,
@@ -699,53 +670,126 @@ private fun ContextualTopBar(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                when (activeTab) {
-                    MainTab.PLAY -> {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(ShellNavSurface)
-                                .border(1.dp, ShellHairline, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 10.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = "\uD83D\uDD25 $streakDays",
-                                style = LinearTextStyles.TabularLabel.copy(
-                                    color = ShellStreakAmber,
-                                    fontSize = 12.sp,
-                                ),
-                            )
-                        }
-                        NotificationBellButton(
-                            hasBadge = hasPendingNotifications,
-                            onClick = onNotificationClick,
+                // Global Stats: Streak, Coins, Elo on every screen (Linear style with icons & height 32dp)
+                val pillShape = RoundedCornerShape(8.dp)
+                val pillBg = Brush.verticalGradient(
+                    listOf(Color(0xFF1B1E22), Color(0xFF111316))
+                )
+                val pillBorderDefault = Brush.verticalGradient(
+                    listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Streak Box: Flame + streak days
+                    val isStreakActive = streakDays > 0
+                    val streakBorder = if (isStreakActive) {
+                        Brush.verticalGradient(listOf(Color(0x80FF9F1C), Color(0x26FF9F1C)))
+                    } else {
+                        pillBorderDefault
+                    }
+                    Row(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .clip(pillShape)
+                            .background(pillBg)
+                            .border(1.dp, streakBorder, pillShape)
+                            .padding(horizontal = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        SsIcon(
+                            icon = SsIcons.StreakFire,
+                            contentDescription = "Daily streak",
+                            tint = if (isStreakActive) Color(0xFFFF9F1C) else ShellInactiveText,
+                            iconSize = 14.dp,
+                        )
+                        Text(
+                            text = "$streakDays",
+                            style = LinearTextStyles.TabularLabel.copy(
+                                color = if (isStreakActive) ShellActiveText else ShellInactiveText,
+                                fontSize = 12.sp,
+                            ),
                         )
                     }
 
-                    MainTab.NETWORK -> {
-                        NotificationBellButton(
-                            hasBadge = hasPendingNotifications,
-                            onClick = onNotificationClick,
+                    // Coins Box: Coin icon + coin amount
+                    val hasCoins = coins > 0
+                    Row(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .clip(pillShape)
+                            .background(pillBg)
+                            .border(1.dp, pillBorderDefault, pillShape)
+                            .padding(horizontal = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        SsIcon(
+                            icon = SsIcons.Coin,
+                            contentDescription = "Coins",
+                            tint = if (hasCoins) Color(0xFFE2E4E9) else ShellInactiveText,
+                            iconSize = 14.dp,
                         )
-                        TopBarIconButton(
-                            icon = Icons.Rounded.Add,
-                            contentDescription = "Add friend by ID",
-                            tint = ShellActiveText,
-                            onClick = onOpenAddFriend,
+                        Text(
+                            text = "$coins",
+                            style = LinearTextStyles.TabularLabel.copy(
+                                color = if (hasCoins) ShellActiveText else ShellInactiveText,
+                                fontSize = 12.sp,
+                            ),
                         )
                     }
 
-                    MainTab.PROFILE -> {
-                        TopBarIconButton(
-                            icon = Icons.Rounded.Settings,
-                            contentDescription = "Settings",
-                            tint = ShellActiveText,
-                            onClick = onOpenSettings,
+                    // Elo Box: Shield rank icon + Elo rating
+                    Row(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .clip(pillShape)
+                            .background(pillBg)
+                            .border(1.dp, pillBorderDefault, pillShape)
+                            .padding(horizontal = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        SsIcon(
+                            icon = SsIcons.Shield,
+                            contentDescription = "Elo rating",
+                            tint = Color(0xFF5E6AD2),
+                            iconSize = 14.dp,
+                        )
+                        Text(
+                            text = "$elo",
+                            style = LinearTextStyles.TabularLabel.copy(
+                                color = ShellActiveText,
+                                fontSize = 12.sp,
+                            ),
                         )
                     }
                 }
+
+                // Screen-specific actions if on Network tab
+                if (activeTab == MainTab.NETWORK) {
+                    NotificationBellButton(
+                        hasBadge = hasPendingNotifications,
+                        onClick = onNotificationClick,
+                    )
+                    TopBarIconButton(
+                        icon = Icons.Rounded.Add,
+                        contentDescription = "Add friend by ID",
+                        tint = ShellActiveText,
+                        onClick = onOpenAddFriend,
+                    )
+                }
+
+                // Global Settings button on every screen
+                TopBarIconButton(
+                    icon = SsIcons.SettingsOutline,
+                    contentDescription = "Settings",
+                    tint = ShellActiveText,
+                    onClick = onOpenSettings,
+                )
             }
         }
         HorizontalDivider(color = ShellHairline, thickness = 1.dp)
@@ -759,7 +803,7 @@ private fun NotificationBellButton(
 ) {
     Box(
         modifier = Modifier
-            .size(34.dp)
+            .size(32.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(ShellNavSurface)
             .border(1.dp, ShellHairline, RoundedCornerShape(8.dp))
@@ -771,13 +815,13 @@ private fun NotificationBellButton(
             imageVector = Icons.Rounded.Notifications,
             contentDescription = "Notifications",
             tint = ShellActiveText,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(17.dp),
         )
         if (hasBadge) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(6.dp)
+                    .padding(5.dp)
                     .size(7.dp)
                     .clip(CircleShape)
                     .background(ShellBadgeRed),
@@ -793,12 +837,23 @@ private fun TopBarIconButton(
     tint: Color,
     onClick: () -> Unit,
 ) {
+    val shape = RoundedCornerShape(8.dp)
     Box(
         modifier = Modifier
-            .size(34.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(ShellNavSurface)
-            .border(1.dp, ShellHairline, RoundedCornerShape(8.dp))
+            .size(32.dp)
+            .clip(shape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF1B1E22), Color(0xFF111316))
+                )
+            )
+            .border(
+                1.dp,
+                Brush.verticalGradient(
+                    listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))
+                ),
+                shape,
+            )
             .pointerHoverIcon(PointerIcon.Hand)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -807,7 +862,44 @@ private fun TopBarIconButton(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = tint,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+@Composable
+private fun TopBarIconButton(
+    icon: DrawableResource,
+    contentDescription: String,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(8.dp)
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(shape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF1B1E22), Color(0xFF111316))
+                )
+            )
+            .border(
+                1.dp,
+                Brush.verticalGradient(
+                    listOf(Color(0x33FFFFFF), Color(0x0FFFFFFF))
+                ),
+                shape,
+            )
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        SsIcon(
+            icon = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            iconSize = 16.dp,
         )
     }
 }
@@ -815,138 +907,49 @@ private fun TopBarIconButton(
 private data class NavTabSpec(
     val tab: MainTab,
     val label: String,
-    val icon: ImageVector,
+    val icon: DrawableResource,
 )
 
 private val NavigationTabs = listOf(
-    NavTabSpec(MainTab.PLAY, "Play", Icons.Rounded.SportsEsports),
-    NavTabSpec(MainTab.NETWORK, "Network", Icons.Rounded.Wifi),
-    NavTabSpec(MainTab.PROFILE, "Profile", Icons.Rounded.Person),
+    NavTabSpec(MainTab.PLAY, "Play", SsIcons.Games),
+    NavTabSpec(MainTab.NETWORK, "Network", SsIcons.Network),
+    NavTabSpec(MainTab.PROFILE, "Profile", SsIcons.Profile),
 )
+
+private fun navItems(
+    activeTab: MainTab,
+    onSelectTab: (MainTab) -> Unit,
+): List<SsNavItem> = NavigationTabs.map { spec ->
+    SsNavItem(
+        label = spec.label,
+        icon = spec.icon,
+        selected = activeTab == spec.tab,
+        onClick = { onSelectTab(spec.tab) },
+    )
+}
 
 @Composable
 private fun DesktopNavigationRail(
     activeTab: MainTab,
     onSelectTab: (MainTab) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .width(80.dp)
-            .fillMaxHeight()
-            .background(ShellNavSurface),
-    ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .padding(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            NavigationTabs.forEach { spec ->
-                val selected = activeTab == spec.tab
-                val tint = if (selected) ShellActiveText else ShellInactiveText
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(role = Role.Tab, onClick = { onSelectTab(spec.tab) }),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (selected) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .width(2.dp)
-                                .height(28.dp)
-                                .background(ShellAccentIndigo),
-                        )
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = spec.icon,
-                            contentDescription = spec.label,
-                            tint = tint,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Text(
-                            text = spec.label,
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                            color = tint,
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-        }
-        VerticalDivider(color = ShellHairline, thickness = 1.dp)
-    }
+    SsNavRail(
+        items = navItems(activeTab, onSelectTab),
+    )
 }
 
 @Composable
 private fun MobileBottomNavBar(
     activeTab: MainTab,
     onSelectTab: (MainTab) -> Unit,
+    onAddFriendClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .background(ShellNavSurface),
-    ) {
-        HorizontalDivider(color = ShellHairline, thickness = 1.dp)
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            NavigationTabs.forEach { spec ->
-                val selected = activeTab == spec.tab
-                val tint = if (selected) ShellActiveText else ShellInactiveText
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .pointerHoverIcon(PointerIcon.Hand)
-                        .clickable(role = Role.Tab, onClick = { onSelectTab(spec.tab) }),
-                ) {
-                    if (selected) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .fillMaxWidth(0.55f)
-                                .height(2.dp)
-                                .background(ShellAccentIndigo),
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Icon(
-                            imageVector = spec.icon,
-                            contentDescription = spec.label,
-                            tint = tint,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Text(
-                            text = spec.label,
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                            color = tint,
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-        }
-    }
+    SsBottomNav(
+        items = navItems(activeTab, onSelectTab),
+        onFabClick = if (activeTab == MainTab.NETWORK) onAddFriendClick else null,
+        fabIcon = SsIcons.AddFriend,
+        fabContentDescription = "Add friend",
+    )
 }
 
 @Composable
@@ -1050,7 +1053,7 @@ private fun GlobalNotificationBanner(
                         Text(
                             text = "Accept",
                             style = MaterialTheme.typography.labelSmall,
-                            color = ShellActiveText,
+                            color = Color(0xFF08090A),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                         )
                     }
@@ -1150,7 +1153,7 @@ private fun AddFriendByIdDialog(
                     Text(
                         text = "Add Friend",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (isValid) ShellActiveText else SplitSignalColors.TextMuted,
+                        color = if (isValid) Color(0xFF08090A) else SplitSignalColors.TextMuted,
                         modifier = Modifier.padding(vertical = 10.dp),
                     )
                 }
@@ -1162,7 +1165,6 @@ private fun AddFriendByIdDialog(
 @Composable
 private fun DesktopJudgeDemoBar(
     onLaunchMath: () -> Unit,
-    onLaunchBattleship: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -1196,20 +1198,6 @@ private fun DesktopJudgeDemoBar(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
-            TactileTile(
-                onClick = onLaunchBattleship,
-                backgroundColor = SplitSignalColors.SurfaceTile,
-                restingBorderColor = SplitSignalColors.BorderSubtle,
-                cornerRadius = 8.dp,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-            ) {
-                Text(
-                    text = "Dual Battleship",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = SplitSignalColors.AccentEmerald,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-            }
         }
     }
 }
@@ -1229,3 +1217,4 @@ private fun MathPuzzleRoute(
         onNextLevel = holder::onNextLevel,
     )
 }
+

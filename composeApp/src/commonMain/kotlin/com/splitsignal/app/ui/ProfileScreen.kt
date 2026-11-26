@@ -55,19 +55,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.splitsignal.core.domain.CompetenceTrophy
+import com.splitsignal.core.domain.FileTransferItem
 import com.splitsignal.core.domain.FriendRecord
 import com.splitsignal.core.domain.PrivacyMode
 import com.splitsignal.core.domain.ProgressionState
+import com.splitsignal.core.domain.TransferStatus
 import com.splitsignal.core.domain.UserIdentity
+import com.splitsignal.core.domain.formatByteSize
 import kotlinx.coroutines.delay
 
 private val AvatarAccentPalette: List<Color> = listOf(
     SplitSignalColors.AccentIndigo,
-    SplitSignalColors.AccentEmerald,
-    SplitSignalColors.AccentAmber,
-    Color(0xFF38BDF8),
-    Color(0xFFA78BFA),
-    SplitSignalColors.AccentCrimson,
+    SplitSignalColors.AccentIndigo,
 )
 
 /**
@@ -83,8 +82,8 @@ fun ProfileScreen(
     onUpdateDisplayName: (String) -> Unit,
     onCycleAvatarAccent: () -> Unit,
     onOpenCognitiveStats: () -> Unit,
-    onOpenVault: () -> Unit,
     onUpdatePrivacyMode: (PrivacyMode) -> Unit = {},
+    transfers: List<FileTransferItem> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val maxContentWidth = if (windowSizeClass == WindowWidthSizeClass.Compact) 600.dp else 760.dp
@@ -119,183 +118,214 @@ fun ProfileScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = "Profile",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = SplitSignalColors.TextPrimary,
-                )
-                Text(
-                    text = "OFFLINE IDENTITY & HEAD-TO-HEAD",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = SplitSignalColors.TextSecondary,
-                )
-            }
+            var isEditingName by remember { mutableStateOf(false) }
 
-            // Identity & 1-tap copy card
+            // User Identity Card: Name [Edit] + ID: KMP-XXXX [Copy]
             LinearCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        TactileTile(
-                            onClick = onCycleAvatarAccent,
-                            backgroundColor = accentColor.copy(alpha = 0.18f),
-                            restingBorderColor = accentColor.copy(alpha = 0.55f),
-                            cornerRadius = 24.dp,
-                            modifier = Modifier.size(46.dp),
-                        ) {
-                            Text(
-                                text = identity.displayName.take(2).uppercase(),
-                                style = LinearTextStyles.TabularDigit.copy(fontSize = 15.sp),
-                                color = accentColor,
-                            )
-                        }
-
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = "PERMANENT USER ID",
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                color = SplitSignalColors.TextSecondary,
-                            )
-                            Text(
-                                text = identity.userId,
-                                style = LinearTextStyles.TabularDigit.copy(fontSize = 18.sp),
-                                color = SplitSignalColors.TextPrimary,
-                            )
-                        }
-                    }
-
-                    TactileTile(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(identity.userId))
-                            copiedId = true
-                        },
-                        backgroundColor = SplitSignalColors.SurfaceTile,
-                        restingBorderColor = if (copiedId) {
-                            SplitSignalColors.AccentEmerald.copy(alpha = 0.5f)
-                        } else {
-                            SplitSignalColors.BorderSubtle
-                        },
-                        cornerRadius = 8.dp,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            AnimatedContent(
-                                targetState = copiedId,
-                                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                label = "CopyMorphIcon",
-                            ) { isCopied ->
-                                Icon(
-                                    imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
-                                    contentDescription = if (isCopied) "Copied" else "Copy User ID",
-                                    tint = if (isCopied) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                            }
-                            Text(
-                                text = if (copiedId) "Copied" else "Copy",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (copiedId) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                            )
-                        }
-                    }
-                }
-
-                HorizontalDivider(thickness = 1.dp, color = SplitSignalColors.BorderSubtle)
-
-                // Editable display name
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "DISPLAY NAME",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = SplitSignalColors.TextSecondary,
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        OutlinedTextField(
-                            value = nameDraft,
-                            onValueChange = { nameDraft = it },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = SplitSignalColors.SurfaceTile,
-                                unfocusedContainerColor = SplitSignalColors.SurfaceTile,
-                                focusedBorderColor = SplitSignalColors.BorderFocus,
-                                unfocusedBorderColor = SplitSignalColors.BorderSubtle,
-                                focusedTextColor = SplitSignalColors.TextPrimary,
-                                unfocusedTextColor = SplitSignalColors.TextPrimary,
-                                cursorColor = SplitSignalColors.AccentIndigo,
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f),
+                        Text(
+                            text = identity.displayName,
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                            color = SplitSignalColors.TextPrimary,
                         )
-
-                        val canSave = nameDraft.trim().isNotEmpty() && nameDraft.trim() != identity.displayName
-                        Button(
-                            onClick = { onUpdateDisplayName(nameDraft.trim()) },
-                            enabled = canSave,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = SplitSignalColors.AccentIndigo,
-                                contentColor = SplitSignalColors.TextPrimary,
-                                disabledContainerColor = SplitSignalColors.SurfaceTile,
-                                disabledContentColor = SplitSignalColors.TextMuted,
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        TactileTile(
+                            onClick = { isEditingName = !isEditingName },
+                            backgroundColor = SplitSignalColors.SurfaceTile,
+                            restingBorderColor = SplitSignalColors.BorderSubtle,
+                            cornerRadius = 8.dp,
                         ) {
                             Text(
-                                text = "Save",
+                                text = if (isEditingName) "Close" else "Edit",
                                 style = MaterialTheme.typography.labelMedium,
+                                color = SplitSignalColors.TextPrimary,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             )
                         }
                     }
-                }
 
-                // Avatar accent picker
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "AVATAR ACCENT",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = SplitSignalColors.TextSecondary,
-                    )
+                    if (isEditingName) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            OutlinedTextField(
+                                value = nameDraft,
+                                onValueChange = { nameDraft = it },
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = SplitSignalColors.SurfaceTile,
+                                    unfocusedContainerColor = SplitSignalColors.SurfaceTile,
+                                    focusedBorderColor = SplitSignalColors.BorderFocus,
+                                    unfocusedBorderColor = SplitSignalColors.BorderSubtle,
+                                    focusedTextColor = SplitSignalColors.TextPrimary,
+                                    unfocusedTextColor = SplitSignalColors.TextPrimary,
+                                    cursorColor = SplitSignalColors.AccentIndigo,
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.weight(1f),
+                            )
+                            Button(
+                                onClick = {
+                                    onUpdateDisplayName(nameDraft.trim())
+                                    isEditingName = false
+                                },
+                                enabled = nameDraft.trim().isNotEmpty(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SplitSignalColors.AccentIndigo,
+                                    contentColor = SplitSignalColors.TextPrimary,
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                            ) {
+                                Text("Save")
+                            }
+                        }
+                    }
+
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AvatarAccentPalette.forEachIndexed { index, color ->
-                            val isSelected = identity.avatarAccentIndex.mod(AvatarAccentPalette.size) == index
-                            Box(
-                                modifier = Modifier
-                                    .size(if (isSelected) 18.dp else 14.dp)
-                                    .clip(CircleShape)
-                                    .background(color)
-                                    .border(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) SplitSignalColors.TextPrimary else SplitSignalColors.BorderSubtle,
-                                        shape = CircleShape,
-                                    ),
-                            )
-                        }
-                        MatiksChipButton(
-                            label = "Cycle",
-                            accentColor = accentColor,
-                            onClick = onCycleAvatarAccent,
+                        Text(
+                            text = "ID: ${identity.userId}",
+                            style = LinearTextStyles.TabularDigit.copy(fontSize = 15.sp),
+                            color = SplitSignalColors.TextSecondary,
                         )
+                        TactileTile(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(identity.userId))
+                                copiedId = true
+                            },
+                            backgroundColor = SplitSignalColors.SurfaceTile,
+                            restingBorderColor = if (copiedId) SplitSignalColors.AccentIndigo.copy(alpha = 0.5f) else SplitSignalColors.BorderSubtle,
+                            cornerRadius = 8.dp,
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = if (copiedId) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
+                                    contentDescription = "Copy User ID",
+                                    tint = if (copiedId) SplitSignalColors.AccentIndigo else SplitSignalColors.TextPrimary,
+                                    modifier = Modifier.size(15.dp),
+                                )
+                                Text(
+                                    text = if (copiedId) "Copied" else "Copy",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (copiedId) SplitSignalColors.AccentIndigo else SplitSignalColors.TextPrimary,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Borderless Stat Row (tnum)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "${progression.streakDays} Days",
+                        style = LinearTextStyles.TabularDigit.copy(fontSize = 20.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                        color = SplitSignalColors.TextPrimary,
+                    )
+                    Text(
+                        text = "Streak",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SplitSignalColors.TextSecondary,
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "${progression.elo}",
+                        style = LinearTextStyles.TabularDigit.copy(fontSize = 20.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                        color = SplitSignalColors.TextPrimary,
+                    )
+                    Text(
+                        text = "Elo",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SplitSignalColors.TextSecondary,
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "${progression.solvedCount}",
+                        style = LinearTextStyles.TabularDigit.copy(fontSize = 20.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                        color = SplitSignalColors.TextPrimary,
+                    )
+                    Text(
+                        text = "Solved",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SplitSignalColors.TextSecondary,
+                    )
+                }
+            }
+
+            // Section: RECENT TRANSFERS & MATCHES
+            val recentActivities = remember(transfers, progression) {
+                buildList {
+                    transfers.filter { it.status == TransferStatus.COMPLETED }.forEach { t ->
+                        add(t.fileName to formatByteSize(t.fileSizeBytes))
+                    }
+                    if (progression.dailyCompletedToday) {
+                        add("Daily Workout" to "Completed today")
+                    }
+                    progression.modeClears.forEach { (gameType, clears) ->
+                        if (clears > 0) {
+                            add(gameType.displayName to "$clears solved")
+                        }
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "RECENT TRANSFERS & MATCHES",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = SplitSignalColors.TextSecondary,
+                )
+                if (recentActivities.isEmpty()) {
+                    LinearCard(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "No recent transfers or matches yet. Solved games and LAN file transfers will appear here.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SplitSignalColors.TextSecondary,
+                        )
+                    }
+                } else {
+                    recentActivities.take(5).forEach { (title, subtitle) ->
+                        LinearCard(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = Color(0xFF26B57B),
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Text(
+                                    text = "$title · $subtitle",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = SplitSignalColors.TextPrimary,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -306,7 +336,7 @@ fun ProfileScreen(
                 onSelectMode = onUpdatePrivacyMode,
             )
 
-            // Quick links to Cognitive Stats & Vault
+            // Quick link to Cognitive Stats
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -316,7 +346,7 @@ fun ProfileScreen(
                     backgroundColor = SplitSignalColors.SurfaceCard,
                     restingBorderColor = SplitSignalColors.BorderSubtle,
                     cornerRadius = 12.dp,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
                         modifier = Modifier
@@ -346,123 +376,6 @@ fun ProfileScreen(
                     }
                 }
 
-                TactileTile(
-                    onClick = onOpenVault,
-                    backgroundColor = SplitSignalColors.SurfaceCard,
-                    restingBorderColor = SplitSignalColors.BorderSubtle,
-                    cornerRadius = 12.dp,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Storefront,
-                            contentDescription = "Vault",
-                            tint = SplitSignalColors.AccentEmerald,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                            Text(
-                                text = "Vault",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = SplitSignalColors.TextPrimary,
-                            )
-                            Text(
-                                text = "${progression.coins} Coins",
-                                style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                                color = SplitSignalColors.TextSecondary,
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Competence Proofs (Trophies)
-            LinearCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "COMPETENCE PROOFS (TROPHIES)",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = SplitSignalColors.TextSecondary,
-                    )
-                    Text(
-                        text = "${progression.unlockedTrophies.size}/${CompetenceTrophy.entries.size}",
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                        color = if (progression.unlockedTrophies.isNotEmpty()) {
-                            SplitSignalColors.AccentEmerald
-                        } else {
-                            SplitSignalColors.TextMuted
-                        },
-                    )
-                }
-
-                if (progression.unlockedTrophies.isEmpty()) {
-                    Text(
-                        text = "No trophies unlocked yet. Earn competence proofs through flawless solves, sub-30s clears, LAN duel wins, and 7-day streaks.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SplitSignalColors.TextSecondary,
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CompetenceTrophy.entries.forEach { trophy ->
-                        val unlocked = trophy in progression.unlockedTrophies
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(
-                                    if (unlocked) {
-                                        SplitSignalColors.AccentEmerald.copy(alpha = 0.12f)
-                                    } else {
-                                        SplitSignalColors.SurfaceTile
-                                    },
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (unlocked) {
-                                        SplitSignalColors.AccentEmerald.copy(alpha = 0.45f)
-                                    } else {
-                                        SplitSignalColors.BorderSubtle
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                )
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp),
-                            ) {
-                                Text(
-                                    text = trophy.title,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = if (unlocked) SplitSignalColors.TextPrimary else SplitSignalColors.TextSecondary,
-                                )
-                                Text(
-                                    text = trophy.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (unlocked) SplitSignalColors.TextSecondary else SplitSignalColors.TextMuted,
-                                )
-                            }
-                            Text(
-                                text = if (unlocked) "UNLOCKED" else "LOCKED",
-                                style = LinearTextStyles.TabularLabel.copy(fontSize = 10.sp),
-                                color = if (unlocked) SplitSignalColors.AccentEmerald else SplitSignalColors.TextMuted,
-                            )
-                        }
-                    }
-                }
             }
 
             // Head-to-head duel stats across saved friends
@@ -588,8 +501,8 @@ private fun NearbyVisibilityCard(
         ) {
             PrivacyMode.entries.forEach { mode ->
                 val selected = mode == currentMode
-                val bgColor = if (selected) SplitSignalColors.AccentIndigo else Color.Transparent
-                val textColor = if (selected) SplitSignalColors.TextPrimary else SplitSignalColors.TextSecondary
+                val bgColor = if (selected) Color(0xFF5E6AD2) else Color.Transparent
+                val textColor = if (selected) Color.White else SplitSignalColors.TextSecondary
                 Box(
                     modifier = Modifier
                         .weight(1f)

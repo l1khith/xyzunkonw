@@ -1,4 +1,4 @@
-package com.splitsignal.app.ui
+﻿package com.splitsignal.app.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -44,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
 import com.splitsignal.core.domain.CrossMathGameState
 import com.splitsignal.core.domain.KenKenGameState
 import com.splitsignal.core.domain.MathMazeGameState
@@ -63,7 +65,6 @@ fun CrossMathScreen(
     progression: ProgressionState,
     reward: SolveRewardBreakdown?,
     roomCode: String?,
-    isTriathlon: Boolean,
     widthSizeClass: WindowWidthSizeClass,
     onSelectCell: (Int) -> Unit,
     onPlaceBankTile: (Int) -> Unit,
@@ -89,7 +90,6 @@ fun CrossMathScreen(
                 elapsedSeconds = state.elapsedSeconds,
                 hintTokens = progression.hintTokens,
                 roomCode = roomCode,
-                triathlonRoundIndex = if (isTriathlon) state.roundIndex else null,
                 onUseHint = onUseHint,
                 onExit = onExit,
             )
@@ -152,7 +152,7 @@ fun CrossMathScreen(
                                         modifier = Modifier.weight(1f).aspectRatio(1f),
                                     ) {
                                         Text(
-                                            text = value?.toString() ?: "—",
+                                            text = value?.toString() ?: "â€”",
                                             style = LinearTextStyles.TabularDigit.copy(fontSize = 18.sp),
                                             color = when {
                                                 value == null -> SplitSignalColors.TextMuted
@@ -187,11 +187,24 @@ fun CrossMathScreen(
                                         .padding(horizontal = 8.dp, vertical = 10.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(
-                                        text = if (rowLocked) "✓ ${state.board.rowTargets[r]}" else "= ${state.board.rowTargets[r]}",
-                                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                                        color = if (rowLocked) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        if (rowLocked) {
+                                            SsIcon(
+                                                icon = SsIcons.MaterialCheck,
+                                                contentDescription = "Row satisfied",
+                                                tint = SplitSignalColors.AccentEmerald,
+                                                iconSize = 11.dp,
+                                            )
+                                        }
+                                        Text(
+                                            text = (if (rowLocked) "" else "= ") + state.board.rowTargets[r],
+                                            style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
+                                            color = if (rowLocked) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
+                                        )
+                                    }
                                 }
                             }
 
@@ -239,11 +252,24 @@ fun CrossMathScreen(
                                         .padding(vertical = 6.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(
-                                        text = if (sat) "✓ ${state.board.colTargets[c]}" else "= ${state.board.colTargets[c]}",
-                                        style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                                        color = if (sat) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        if (sat) {
+                                            SsIcon(
+                                                icon = SsIcons.MaterialCheck,
+                                                contentDescription = "Column satisfied",
+                                                tint = SplitSignalColors.AccentEmerald,
+                                                iconSize = 10.dp,
+                                            )
+                                        }
+                                        Text(
+                                            text = (if (sat) "" else "= ") + state.board.colTargets[c],
+                                            style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
+                                            color = if (sat) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
+                                        )
+                                    }
                                 }
                                 if (c < dim - 1) Spacer(modifier = Modifier.size(10.dp))
                             }
@@ -266,7 +292,7 @@ fun CrossMathScreen(
                             modifier = Modifier.size(52.dp),
                         ) {
                             Text(
-                                text = if (available) "${tile.value}" else "·",
+                                text = if (available) "${tile.value}" else "Â·",
                                 style = LinearTextStyles.TabularDigit.copy(fontSize = 18.sp),
                                 color = if (available) SplitSignalColors.TextPrimary else SplitSignalColors.TextMuted,
                             )
@@ -573,7 +599,6 @@ fun MemoryMatrixScreen(
     progression: ProgressionState,
     reward: SolveRewardBreakdown?,
     roomCode: String?,
-    isTriathlon: Boolean,
     widthSizeClass: WindowWidthSizeClass,
     onTapCell: (Int) -> Unit,
     onPeekHint: () -> Unit,
@@ -599,7 +624,6 @@ fun MemoryMatrixScreen(
                 hintTokens = progression.hintTokens,
                 hintLabel = "Peek",
                 roomCode = roomCode,
-                triathlonRoundIndex = if (isTriathlon) state.roundIndex else null,
                 onUseHint = onPeekHint,
                 onExit = onExit,
             )
@@ -613,7 +637,7 @@ fun MemoryMatrixScreen(
                 borderColor = if (state.isRevealing) SplitSignalColors.AccentAmber.copy(alpha = 0.6f) else SplitSignalColors.BorderFocus,
             ) {
                 Text(
-                    text = if (state.isRevealing) "Memorize the numbered tiles…" else state.board.promptText,
+                    text = if (state.isRevealing) "Memorize the numbered tilesâ€¦" else state.board.promptText,
                     style = MaterialTheme.typography.titleSmall,
                     color = if (state.isRevealing) SplitSignalColors.AccentAmber else SplitSignalColors.TextPrimary,
                     textAlign = TextAlign.Center,
@@ -709,7 +733,6 @@ fun MindsnapScreen(
     progression: ProgressionState,
     reward: SolveRewardBreakdown?,
     roomCode: String?,
-    isTriathlon: Boolean,
     widthSizeClass: WindowWidthSizeClass,
     onSubmitAnswer: (Int) -> Unit,
     onUseHint: () -> Unit,
@@ -734,7 +757,6 @@ fun MindsnapScreen(
                 elapsedSeconds = state.remainingSeconds,
                 hintTokens = progression.hintTokens,
                 roomCode = roomCode,
-                triathlonRoundIndex = if (isTriathlon) state.roundIndex else null,
                 onUseHint = onUseHint,
                 onExit = onExit,
             )
@@ -817,3 +839,4 @@ fun MindsnapScreen(
         }
     }
 }
+

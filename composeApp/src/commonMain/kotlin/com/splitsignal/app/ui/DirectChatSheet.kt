@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.AttachFile
@@ -71,7 +72,6 @@ import com.splitsignal.app.platform.PlatformMediaBridge
 import com.splitsignal.core.domain.ChatMessageRecord
 import com.splitsignal.core.domain.ChatSessionUiState
 import com.splitsignal.core.domain.FileTransferItem
-import com.splitsignal.core.domain.PlatformFileHandle
 import com.splitsignal.core.domain.SyncPacket
 import com.splitsignal.core.domain.TransferStatus
 import com.splitsignal.core.domain.TransportConnectionState
@@ -86,8 +86,6 @@ fun DirectChatSheet(
     sessionState: ChatSessionUiState,
     mediaBridge: PlatformMediaBridge,
     onSendMessage: (String) -> Unit,
-    onSendSticker: (stickerCode: String, label: String) -> Unit,
-    onSendVoiceNote: (PlatformFileHandle) -> Unit,
     onTypingChanged: (Boolean) -> Unit,
     onAttachFile: () -> Unit,
     onSendGameInvite: () -> Unit = {},
@@ -239,17 +237,9 @@ private fun ChatTopBar(
     onBack: () -> Unit,
     onSendGameInvite: () -> Unit,
 ) {
-    val (statusColor, statusLabel) = when {
-        isOfflineHistory -> SplitSignalColors.TextMuted to "Offline History"
-        peerIsTyping -> SplitSignalColors.AccentEmerald to "typing..."
-        connectionState == TransportConnectionState.CONNECTED ->
-            SplitSignalColors.AccentEmerald to "Connected via Local Wi-Fi"
-        connectionState == TransportConnectionState.CONNECTING ->
-            SplitSignalColors.AccentAmber to "Connecting..."
-        connectionState == TransportConnectionState.ERROR ->
-            SplitSignalColors.AccentCrimson to "Connection Error"
-        else -> SplitSignalColors.TextMuted to "Disconnected"
-    }
+    val isOnline = !isOfflineHistory && connectionState == TransportConnectionState.CONNECTED
+    val statusColor = if (isOnline) Color(0xFFF7F8F8) else SplitSignalColors.TextMuted
+    val statusText = if (isOnline) "● Online" else "● Offline"
 
     Row(
         modifier = Modifier
@@ -279,68 +269,20 @@ private fun ChatTopBar(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = peerName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = SplitSignalColors.TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = peerUserId,
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                        color = SplitSignalColors.TextSecondary,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(SplitSignalColors.SurfaceCard)
-                            .border(1.dp, SplitSignalColors.BorderSubtle, RoundedCornerShape(5.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier.size(7.dp).clip(CircleShape).background(statusColor),
-                    )
-                    Text(
-                        text = statusLabel,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = statusColor,
-                        maxLines = 1,
-                    )
-                }
-            }
+            Text(
+                text = "$peerName · $peerUserId",
+                style = MaterialTheme.typography.titleMedium,
+                color = SplitSignalColors.TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
 
-        if (canDuel) {
-            TactileTile(
-                onClick = onSendGameInvite,
-                backgroundColor = SplitSignalColors.SurfaceCard,
-                restingBorderColor = SplitSignalColors.BorderSubtle,
-                cornerRadius = 10.dp,
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.SportsEsports,
-                        contentDescription = "Duel",
-                        tint = SplitSignalColors.AccentIndigo,
-                        modifier = Modifier.size(15.dp),
-                    )
-                    Text(text = "Duel", style = MaterialTheme.typography.labelMedium, color = SplitSignalColors.TextPrimary)
-                }
-            }
-        }
+        Text(
+            text = statusText,
+            style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp, color = statusColor),
+            modifier = Modifier.padding(end = 4.dp),
+        )
     }
 }
 
@@ -474,8 +416,9 @@ private fun SystemEventPill(message: ChatMessageRecord) {
 @Composable
 private fun ChatBubble(message: ChatMessageRecord) {
     val alignment = if (message.isFromSelf) Alignment.CenterEnd else Alignment.CenterStart
-    val bubbleColor = if (message.isFromSelf) SplitSignalColors.AccentIndigo else SplitSignalColors.SurfaceCard
+    val bubbleColor = if (message.isFromSelf) Color(0xFFF7F8F8) else Color(0xFF101114)
     val borderColor = if (message.isFromSelf) Color.Transparent else SplitSignalColors.BorderSubtle
+    val textColor = if (message.isFromSelf) Color(0xFF08090A) else SplitSignalColors.TextPrimary
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = alignment) {
         Column(
             modifier = Modifier
@@ -493,7 +436,7 @@ private fun ChatBubble(message: ChatMessageRecord) {
                     color = SplitSignalColors.TextSecondary,
                 )
             }
-            Text(text = message.text, style = MaterialTheme.typography.bodyMedium, color = SplitSignalColors.TextPrimary)
+            Text(text = message.text, style = MaterialTheme.typography.bodyMedium, color = textColor)
         }
     }
 }
@@ -571,22 +514,8 @@ private fun FileTransferCard(
     }
     val shareTargetPath = transfer.savedPath?.takeIf { it.isNotBlank() } ?: transfer.fileName
 
-    val fileIcon = when {
-        transfer.mimeType.startsWith("image/") ||
-            transfer.fileName.endsWith(".png") ||
-            transfer.fileName.endsWith(".jpg") -> Icons.Rounded.Image
-        transfer.mimeType == "application/pdf" ||
-            transfer.fileName.endsWith(".pdf") -> Icons.Rounded.PictureAsPdf
-        else -> Icons.Rounded.FolderZip
-    }
-    val iconAccent = when {
-        transfer.mimeType.startsWith("image/") ||
-            transfer.fileName.endsWith(".png") ||
-            transfer.fileName.endsWith(".jpg") -> SplitSignalColors.AccentIndigo
-        transfer.mimeType == "application/pdf" ||
-            transfer.fileName.endsWith(".pdf") -> SplitSignalColors.AccentCrimson
-        else -> SplitSignalColors.AccentIndigo
-    }
+    val fileIcon = Icons.Rounded.Description
+    val iconAccent = SplitSignalColors.AccentIndigo
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = alignment) {
         LinearCard(
@@ -686,72 +615,44 @@ private fun FileTransferCard(
                 TransferStatus.COMPLETED -> {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Completed",
+                            tint = Color(0xFFF7F8F8),
+                            modifier = Modifier.size(16.dp),
+                        )
                         Text(
-                            text = if (transfer.savedPath.isNullOrBlank()) "Ready" else "Saved",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SplitSignalColors.AccentEmerald,
+                            text = "${formatByteSize(transfer.fileSizeBytes)} · Saved to Downloads",
+                            style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
+                            color = SplitSignalColors.TextSecondary,
                             modifier = Modifier.weight(1f),
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            // Save chip
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(
-                                        if (isSaved) SplitSignalColors.AccentEmerald.copy(alpha = 0.14f)
-                                        else SplitSignalColors.SurfaceTile,
-                                    )
-                                    .border(
-                                        1.dp,
-                                        if (isSaved) SplitSignalColors.AccentEmerald.copy(alpha = 0.55f)
-                                        else SplitSignalColors.BorderSubtle,
-                                        RoundedCornerShape(8.dp),
-                                    )
-                                    .pointerHoverIcon(PointerIcon.Hand)
-                                    .clickable(role = Role.Button) { isSaved = true }
-                                    .padding(horizontal = 9.dp, vertical = 5.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = if (isSaved) Icons.Rounded.Check else Icons.Rounded.Download,
-                                    contentDescription = if (isSaved) "Saved" else "Save",
-                                    tint = if (isSaved) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                                    modifier = Modifier.size(13.dp),
-                                )
-                                Text(
-                                    text = if (isSaved) "Saved" else "Save",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isSaved) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                                )
-                            }
-                            // Share chip
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(SplitSignalColors.SurfaceTile)
-                                    .border(1.dp, SplitSignalColors.BorderSubtle, RoundedCornerShape(8.dp))
-                                    .pointerHoverIcon(PointerIcon.Hand)
-                                    .clickable(role = Role.Button) { onShareFile(shareTargetPath, transfer.mimeType) }
-                                    .padding(horizontal = 9.dp, vertical = 5.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Share,
-                                    contentDescription = "Share",
-                                    tint = SplitSignalColors.AccentIndigo,
-                                    modifier = Modifier.size(13.dp),
-                                )
-                                Text(
-                                    text = "Share",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = SplitSignalColors.TextPrimary,
-                                )
-                            }
+                        // Share chip
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SplitSignalColors.SurfaceTile)
+                                .border(1.dp, SplitSignalColors.BorderSubtle, RoundedCornerShape(8.dp))
+                                .pointerHoverIcon(PointerIcon.Hand)
+                                .clickable(role = Role.Button) { onShareFile(shareTargetPath, transfer.mimeType) }
+                                .padding(horizontal = 9.dp, vertical = 5.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Share,
+                                contentDescription = "Share",
+                                tint = SplitSignalColors.AccentIndigo,
+                                modifier = Modifier.size(13.dp),
+                            )
+                            Text(
+                                text = "Share",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SplitSignalColors.TextPrimary,
+                            )
                         }
                     }
                 }
@@ -875,7 +776,7 @@ private fun SimpleInputBar(
             Icon(
                 imageVector = Icons.Rounded.ArrowUpward,
                 contentDescription = "Send",
-                tint = if (draft.isNotBlank() && enabled) SplitSignalColors.TextPrimary else SplitSignalColors.TextMuted,
+                tint = if (draft.isNotBlank() && enabled) Color(0xFF08090A) else SplitSignalColors.TextMuted,
                 modifier = Modifier.size(18.dp),
             )
         }

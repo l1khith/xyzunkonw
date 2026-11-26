@@ -44,6 +44,8 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
 import com.splitsignal.core.domain.UserIdentity
 
 private data class AccentOption(
@@ -390,11 +392,22 @@ private fun OnboardingMicroPuzzleStep(
         }
 
         if (solved) {
-            Text(
-                text = "✓ Instant Solve! 14 × 6 = 84",
-                style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                color = SplitSignalColors.AccentEmerald,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SsIcon(
+                    icon = SsIcons.MaterialCheckCircle,
+                    contentDescription = null,
+                    tint = SplitSignalColors.AccentEmerald,
+                    iconSize = 14.dp,
+                )
+                Text(
+                    text = "Instant Solve! 14 × 6 = 84",
+                    style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
+                    color = SplitSignalColors.AccentEmerald,
+                )
+            }
         } else if (selectedChoice != null) {
             Text(
                 text = "Not quite — try 14 × 6 again.",

@@ -218,7 +218,7 @@ private fun MasteryRankCard(
                     color = SplitSignalColors.TextPrimary,
                 )
                 Text(
-                    text = "Novice → Grandmaster progression",
+                    text = "Novice to Grandmaster progression",
                     style = MaterialTheme.typography.bodySmall,
                     color = SplitSignalColors.TextSecondary,
                 )

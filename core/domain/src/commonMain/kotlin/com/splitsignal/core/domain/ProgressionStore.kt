@@ -107,16 +107,16 @@ data class SolveRewardBreakdown(
  * Daily Brain Workout progress, and lifetime cognitive stats.
  */
 data class ProgressionState(
-    val streakDays: Int = 6,
+    val streakDays: Int = 0,
     val dailyCompletedToday: Boolean = false,
     val dailyStepsCompleted: Int = 0,
     val streakFreezes: Int = 1,
-    val coins: Int = 250,
-    val xp: Int = 840,
-    val elo: Int = 1200,
-    val solvedCount: Int = 12,
-    val duelWins: Int = 3,
-    val totalMatches: Int = 12,
+    val coins: Int = 0,
+    val xp: Int = 0,
+    val elo: Int = 0,
+    val solvedCount: Int = 0,
+    val duelWins: Int = 0,
+    val totalMatches: Int = 0,
     val fastestSolveSeconds: Int? = null,
     val bestAccuracyPercent: Int = 100,
     val modeClears: Map<GameType, Int> = emptyMap(),
@@ -323,7 +323,7 @@ class ProgressionStore(
         val scorecardText = buildString {
             append("SplitSignal • ${gameType.displayName} ($resultTag)\n")
             append("${elapsedSeconds}s • $accuracy% Acc • $mistakes mistake(s) • $leagueTitle ($newElo Elo)\n")
-            append("🔥 ${newStreakDays}d Streak • +$totalCoins Coins • +$xpEarned XP")
+            append("${newStreakDays}d Streak • +$totalCoins Coins • +$xpEarned XP")
         }
 
         _state.update { state ->
@@ -470,7 +470,7 @@ class ProgressionStore(
     companion object {
         const val STREAK_FREEZE_COST = 100
         const val HINT_TOKEN_COST = 40
-        private const val MIN_ELO = 100
+        private const val MIN_ELO = 0
 
         /** 4-step Daily Brain Workout sequence. */
         val DAILY_WORKOUT_ORDER: List<GameType> = listOf(

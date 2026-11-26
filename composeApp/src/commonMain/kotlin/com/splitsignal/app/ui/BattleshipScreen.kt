@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
 import com.splitsignal.core.domain.BattleshipEngine
 import com.splitsignal.core.domain.BattleshipGameState
 
@@ -411,12 +413,12 @@ private fun TargetGridCard(
 
             val canTap = state.winnerRole == null && state.isMyTurn && (isSonarActive || (!isHit && !isMiss))
 
-            val symbol = when {
-                isHit -> "✕"
-                isMiss -> "·"
-                isSonarShip -> "◆"
-                isSonarEmpty -> "○"
-                else -> ""
+            val icon = when {
+                isHit -> SsIcons.MaterialClose
+                isMiss -> SsIcons.MaterialRadioUnchecked
+                isSonarShip -> SsIcons.MaterialSquare
+                isSonarEmpty -> SsIcons.MaterialRadioUnchecked
+                else -> null
             }
             val symbolColor = when {
                 isHit -> SplitSignalColors.ErrorRose
@@ -441,13 +443,13 @@ private fun TargetGridCard(
             }
 
             TargetGridCell(
-                symbol = symbol,
+                icon = icon,
                 symbolColor = symbolColor,
                 baseBg = baseBg,
                 baseBorder = baseBorder,
                 isSonarActive = isSonarActive,
                 enabled = canTap,
-                fontSize = 18.sp,
+                iconSize = 18.dp,
                 onClick = { onCellTap(cellIndex) },
                 modifier = cellModifier,
             )
@@ -511,11 +513,11 @@ private fun FleetGridCard(
                 hasShip -> SplitSignalColors.AccentEmerald.copy(alpha = 0.65f)
                 else -> SplitSignalColors.BorderHairline
             }
-            val symbol = when {
-                isHit -> "✕"
-                hasShip -> "■"
-                isMiss -> "·"
-                else -> ""
+            val icon = when {
+                isHit -> SsIcons.MaterialClose
+                hasShip -> SsIcons.MaterialSquare
+                isMiss -> SsIcons.MaterialRadioUnchecked
+                else -> null
             }
             val symbolColor = when {
                 isHit -> SplitSignalColors.ErrorRose
@@ -530,13 +532,12 @@ private fun FleetGridCard(
                     .border(1.dp, borderColor, RoundedCornerShape(6.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                if (symbol.isNotEmpty()) {
-                    Text(
-                        text = symbol,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = symbolColor,
+                if (icon != null) {
+                    SsIcon(
+                        icon = icon,
+                        contentDescription = null,
+                        tint = symbolColor,
+                        iconSize = 13.dp,
                     )
                 }
             }
@@ -613,13 +614,13 @@ private fun TacticalGridFrame(
 
 @Composable
 private fun TargetGridCell(
-    symbol: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector?,
     symbolColor: Color,
     baseBg: Color,
     baseBorder: Color,
     isSonarActive: Boolean,
     enabled: Boolean,
-    fontSize: TextUnit,
+    iconSize: Dp,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -655,13 +656,12 @@ private fun TargetGridCell(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (symbol.isNotEmpty()) {
-            Text(
-                text = symbol,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                fontSize = fontSize,
-                color = symbolColor,
+        if (icon != null) {
+            SsIcon(
+                icon = icon,
+                contentDescription = null,
+                tint = symbolColor,
+                iconSize = iconSize,
             )
         }
     }

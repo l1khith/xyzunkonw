@@ -115,7 +115,11 @@ fun SsButton(
         SsButtonVariant.Ghost -> SsColors.BorderSubtle
         SsButtonVariant.Dangerous -> SsColors.AccentCrimson
     }
-    val contentColor = if (enabled) SsColors.TextPrimary else SsColors.TextMuted
+    val contentColor = when {
+        !enabled -> SsColors.TextMuted
+        variant == SsButtonVariant.Primary -> Color(0xFF08090A)
+        else -> SsColors.TextPrimary
+    }
 
     TactileTile(
         onClick = onClick,
@@ -468,10 +472,10 @@ fun SsBottomNav(
             Spacer(modifier = Modifier.width(12.dp))
             FloatingActionButton(
                 onClick = onFabClick,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(56.dp),
                 shape = CircleShape,
-                containerColor = SsColors.AccentIndigo,
-                contentColor = SsColors.TextPrimary,
+                containerColor = Color(0xFF5E6AD2),
+                contentColor = Color.White,
                 elevation = FloatingActionButtonDefaults.elevation(
                     defaultElevation = 6.dp,
                     pressedElevation = 10.dp,
@@ -480,8 +484,8 @@ fun SsBottomNav(
                 SsIcon(
                     icon = fabIcon,
                     contentDescription = fabContentDescription,
-                    tint = SsColors.TextPrimary,
-                    iconSize = 26.dp,
+                    tint = Color.White,
+                    iconSize = 24.dp,
                 )
             }
         }
@@ -491,12 +495,12 @@ fun SsBottomNav(
 @Composable
 private fun FloatingNavPillItem(item: SsNavItem) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (item.selected) SsColors.AccentIndigo.copy(alpha = 0.18f) else Color.Transparent,
+        targetValue = if (item.selected) Color(0x24FFFFFF) else Color.Transparent,
         animationSpec = tween(durationMillis = 200),
         label = "navItemBg",
     )
     val tint by animateColorAsState(
-        targetValue = if (item.selected) SsColors.AccentIndigo else SsColors.TextSecondary,
+        targetValue = if (item.selected) Color(0xFFF7F8F8) else Color(0xFF8A8F98),
         animationSpec = tween(durationMillis = 200),
         label = "navItemTint",
     )

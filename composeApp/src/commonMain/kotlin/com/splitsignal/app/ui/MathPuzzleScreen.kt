@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.splitsignal.app.presentation.AppScreen
 import com.splitsignal.app.presentation.SplitSignalAppUiState
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
 import com.splitsignal.core.domain.GameMode
 import com.splitsignal.core.domain.MathClue
 import com.splitsignal.core.domain.MathGameState
@@ -452,12 +454,11 @@ private fun ClueRow(clue: MathClue) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = if (clue.isSatisfied) "✓" else "○",
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            color = if (clue.isSatisfied) SplitSignalColors.AccentEmerald else SplitSignalColors.TextSecondary,
+        SsIcon(
+            icon = if (clue.isSatisfied) SsIcons.MaterialCheckCircle else SsIcons.MaterialRadioUnchecked,
+            contentDescription = if (clue.isSatisfied) "Satisfied" else "Unsatisfied",
+            tint = if (clue.isSatisfied) SplitSignalColors.AccentEmerald else SplitSignalColors.TextSecondary,
+            iconSize = 15.dp,
         )
 
         Text(

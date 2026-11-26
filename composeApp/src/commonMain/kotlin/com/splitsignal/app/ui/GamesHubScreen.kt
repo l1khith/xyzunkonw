@@ -1,5 +1,9 @@
-package com.splitsignal.app.ui
+﻿package com.splitsignal.app.ui
 
+import org.jetbrains.compose.resources.painterResource
+import splitsignal.composeapp.generated.resources.Res
+import splitsignal.composeapp.generated.resources.ic_chevron_right
+import splitsignal.composeapp.generated.resources.ic_expand_less
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -34,10 +38,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.GridOn
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.MonetizationOn
 import androidx.compose.material.icons.rounded.Storefront
@@ -61,10 +68,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import org.jetbrains.compose.resources.DrawableResource
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -78,6 +87,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.splitsignal.app.presentation.LinkTab
 import com.splitsignal.app.presentation.SplitSignalAppUiState
+import com.splitsignal.app.ui.design.SsIcon
+import com.splitsignal.app.ui.design.SsIcons
 import com.splitsignal.core.domain.DiscoveredRoom
 import com.splitsignal.core.domain.GameType
 import com.splitsignal.core.domain.PlayerRole
@@ -88,8 +99,15 @@ import com.splitsignal.core.domain.SudokuSize
 import com.splitsignal.core.domain.TransportConnectionState
 import kotlinx.coroutines.delay
 
-private val StreakAmber = Color(0xFFF59E0B)
-private val CoinGold = Color(0xFFFBBF24)
+
+private data class HubGameItem(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val icon: DrawableResource,
+    val tag: String,
+    val eloReward: String,
+)
 
 /**
  * Sudoku Duel centerpiece Games Hub with Daily Sprint, 1v1 Local Wi-Fi Race,
@@ -112,12 +130,7 @@ fun GamesHubScreen(
     onPlayKenKen: () -> Unit,
     onPlayMemoryMatrix: () -> Unit,
     onPlayMindsnap: () -> Unit,
-    onOpenVaultShop: () -> Unit,
     onOpenStatsProfile: () -> Unit,
-    onPlayMathSolo: () -> Unit,
-    onHostMathCoop: () -> Unit,
-    onPlayBattleshipAi: () -> Unit,
-    onHostBattleshipCoop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isWide = widthSizeClass == WindowWidthSizeClass.Expanded
@@ -129,64 +142,225 @@ fun GamesHubScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        MatiksTopStatusPill(
-            progressionState = progressionState,
-            onOpenStatsProfile = onOpenStatsProfile,
-            onOpenVaultShop = onOpenVaultShop,
-            modifier = Modifier
-                .widthIn(max = 920.dp)
-                .fillMaxWidth(),
-        )
+        var expandedGameId by remember { mutableStateOf<String?>(null) }
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .widthIn(max = 920.dp)
+                .widthIn(max = 800.dp)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            DailyWorkoutHeroCard(
-                progressionState = progressionState,
-                onStartWorkout = onStartDailyWorkout,
-                onPlayDailySudoku = onPlayDailySprint,
-                modifier = Modifier.fillMaxWidth(),
+            Text(
+                text = "SELECT GAME",
+                style = MaterialTheme.typography.labelSmall,
+                color = SplitSignalColors.TextSecondary,
             )
 
-            LocalArenaDuelCard(
-                onHostDuel = onHostDuel,
-                onJoinRoom = onJoinSudokuRace,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            listOf(
+                HubGameItem("sudoku", "SUDOKU", "Classic 9x9 logic puzzle", SsIcons.SudokuGrid, "9×9", "+25 ELO"),
+                HubGameItem("cross_math", "CROSS MATH", "3x3 arithmetic crossword", SsIcons.CrossMath, "3×3", "+20 ELO"),
+                HubGameItem("kenken", "KENKEN", "4x4 arithmetic cages", SsIcons.KenKen, "4×4", "+25 ELO"),
+                HubGameItem("mindsnap", "MINDSNAP BLITZ", "60s rapid combo drill", SsIcons.MindSnap, "60s", "+30 ELO"),
+            ).forEach { (id, title, subtitle, gameIcon, tag, eloReward) ->
+                val isExpanded = expandedGameId == id
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SplitSignalColors.CardSlate)
+                        .border(
+                            1.dp,
+                            Brush.verticalGradient(
+                                listOf(Color(0x2EFFFFFF), Color(0x0FFFFFFF))
+                            ),
+                            RoundedCornerShape(12.dp),
+                        )
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expandedGameId = if (isExpanded) null else id },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color(0xFF22252A), Color(0xFF15171A))
+                                    )
+                                )
+                                .border(
+                                    1.dp,
+                                    Brush.verticalGradient(
+                                        listOf(Color(0x33FFFFFF), Color(0x0DFFFFFF))
+                                    ),
+                                    RoundedCornerShape(10.dp),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            SsIcon(
+                                icon = gameIcon,
+                                contentDescription = title,
+                                tint = SplitSignalColors.TextPrimary,
+                                iconSize = 20.dp,
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    letterSpacing = (-0.2).sp,
+                                ),
+                                color = SplitSignalColors.TextPrimary,
+                            )
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF8A8F98),
+                                ),
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF16181C))
+                                    .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 3.dp),
+                            ) {
+                                Text(
+                                    text = tag,
+                                    style = LinearTextStyles.TabularLabel.copy(
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF8A8F98),
+                                    ),
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF16181C))
+                                    .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 6.dp, vertical = 3.dp),
+                            ) {
+                                Text(
+                                    text = eloReward,
+                                    style = LinearTextStyles.TabularLabel.copy(
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF5E6AD2),
+                                    ),
+                                )
+                            }
+                            Icon(
+                                painter = painterResource(
+                                    if (isExpanded) Res.drawable.ic_expand_less else Res.drawable.ic_chevron_right
+                                ),
+                                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                tint = Color(0xFF62666D),
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
 
-            SixModesGridSection(
-                isWide = isWide,
-                onPlayCrossMath = onPlayCrossMath,
-                onPlayMathMaze = onPlayMathMaze,
-                onPlayKenKen = onPlayKenKen,
-                onPlayMiniSudoku = { onPlaySudokuSolo(SudokuSize.SPRINT_6X6, selectedDifficulty) },
-                onPlayMemoryMatrix = onPlayMemoryMatrix,
-                onPlayMindsnap = onPlayMindsnap,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                    if (isExpanded) {
+                        var selectedMode by remember(id) { mutableStateOf<String?>(null) }
+                        HorizontalDivider(color = SplitSignalColors.BorderHairline, thickness = 1.dp)
 
-            SoloPracticeAndVaultCard(
-                progressionState = progressionState,
-                selectedDifficulty = selectedDifficulty,
-                onSelectDifficulty = onSelectSudokuDifficulty,
-                onPlaySolo = onPlaySudokuSolo,
-                onOpenShop = onOpenVaultShop,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                        if (selectedMode == null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                HubPillButton(
+                                    label = "Solo",
+                                    accentColor = SplitSignalColors.TextPrimary,
+                                    isProminent = false,
+                                    onClick = { selectedMode = "solo" },
+                                    modifier = Modifier.weight(1f),
+                                )
+                                HubPillButton(
+                                    label = "Duo",
+                                    accentColor = SplitSignalColors.AccentIndigo,
+                                    isProminent = true,
+                                    onClick = { selectedMode = "duo" },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                val isDuo = selectedMode == "duo"
+                                val easyLabel = if (id == "sudoku") "Easy 6×6" else "Easy"
+                                val hardLabel = if (id == "sudoku") "Hard 9×9" else "Hard"
 
-            OtherCoopGamesSection(
-                isWide = isWide,
-                onPlayMathSolo = onPlayMathSolo,
-                onHostMathCoop = onHostMathCoop,
-                onPlayBattleshipAi = onPlayBattleshipAi,
-                onHostBattleshipCoop = onHostBattleshipCoop,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                                HubPillButton(
+                                    label = easyLabel,
+                                    accentColor = SplitSignalColors.TextPrimary,
+                                    isProminent = false,
+                                    onClick = {
+                                        if (isDuo) {
+                                            val gameType = when (id) {
+                                                "sudoku" -> GameType.SUDOKU_6X6
+                                                "cross_math" -> GameType.CROSS_MATH
+                                                "kenken" -> GameType.KENKEN
+                                                else -> GameType.MINDSNAP
+                                            }
+                                            onHostDuel(gameType)
+                                        } else {
+                                            when (id) {
+                                                "sudoku" -> onPlaySudokuSolo(SudokuSize.SPRINT_6X6, SudokuDifficulty.EASY)
+                                                "cross_math" -> onPlayCrossMath()
+                                                "kenken" -> onPlayKenKen()
+                                                else -> onPlayMindsnap()
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                                HubPillButton(
+                                    label = hardLabel,
+                                    accentColor = SplitSignalColors.AccentIndigo,
+                                    isProminent = true,
+                                    onClick = {
+                                        if (isDuo) {
+                                            val gameType = when (id) {
+                                                "sudoku" -> GameType.SUDOKU_9X9
+                                                "cross_math" -> GameType.CROSS_MATH
+                                                "kenken" -> GameType.KENKEN
+                                                else -> GameType.MINDSNAP
+                                            }
+                                            onHostDuel(gameType)
+                                        } else {
+                                            when (id) {
+                                                "sudoku" -> onPlaySudokuSolo(SudokuSize.CLASSIC_9X9, SudokuDifficulty.HARD)
+                                                "cross_math" -> onPlayCrossMath()
+                                                "kenken" -> onPlayKenKen()
+                                                else -> onPlayMindsnap()
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -298,7 +472,6 @@ fun LocalLinkScreen(
 @Composable
 private fun SudokuStatusTopBar(
     progressionState: ProgressionState,
-    onOpenVaultShop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -321,7 +494,7 @@ private fun SudokuStatusTopBar(
                 maxLines = 1,
             )
             Text(
-                text = "Elo ${progressionState.elo} · ${StreakTier.forDays(progressionState.streakDays).label}",
+                text = "Elo ${progressionState.elo} Â· ${StreakTier.forDays(progressionState.streakDays).label}",
                 style = MaterialTheme.typography.bodySmall,
                 color = SplitSignalColors.TextSecondary,
                 maxLines = 1,
@@ -339,19 +512,19 @@ private fun SudokuStatusTopBar(
         ) {
             StatusMetricChip(
                 icon = Icons.Rounded.LocalFireDepartment,
-                iconTint = StreakAmber,
+                iconTint = SplitSignalColors.AccentIndigo,
                 value = "${progressionState.streakDays}d",
                 onClick = null,
             )
             StatusMetricChip(
                 icon = Icons.Rounded.MonetizationOn,
-                iconTint = CoinGold,
+                iconTint = SplitSignalColors.AccentIndigo,
                 value = "${progressionState.coins}",
-                onClick = onOpenVaultShop,
+                onClick = null,
             )
             StatusMetricChip(
                 icon = Icons.Rounded.Bolt,
-                iconTint = SplitSignalColors.AccentEmerald,
+                iconTint = SplitSignalColors.AccentIndigo,
                 value = "${progressionState.xp}",
                 onClick = null,
             )
@@ -442,7 +615,7 @@ private fun DailySprintHeroCard(
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
                 Text(
-                    text = "${tier.label} · ${progressionState.streakFreezes} Freeze",
+                    text = "${tier.label} Â· ${progressionState.streakFreezes} Freeze",
                     style = MaterialTheme.typography.labelSmall,
                     color = SplitSignalColors.TextSecondary,
                 )
@@ -463,7 +636,7 @@ private fun DailySprintHeroCard(
             }
             Text(
                 text = if (progressionState.dailyCompletedToday) {
-                    "Daily Sprint Complete ✓"
+                    "Daily Sprint Complete"
                 } else {
                     "Solve 1 board to keep ${progressionState.streakDays}d streak"
                 },
@@ -483,7 +656,7 @@ private fun DailySprintHeroCard(
         )
 
         HubPrimaryButton(
-            label = "PLAY DAILY SPRINT (6×6)",
+            label = "PLAY DAILY SPRINT (6Ã—6)",
             onClick = onPlayDailySprint,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -557,12 +730,12 @@ private fun WifiRaceCard(
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "Same board · Live opponent progress bar",
+                text = "Same board Â· Live opponent progress bar",
                 style = MaterialTheme.typography.titleMedium,
                 color = SplitSignalColors.TextPrimary,
             )
             Text(
-                text = "Auto-discovery on local Wi-Fi · Ink sabotage every 15 cells",
+                text = "Auto-discovery on local Wi-Fi Â· Ink sabotage every 15 cells",
                 style = MaterialTheme.typography.bodySmall,
                 color = SplitSignalColors.TextSecondary,
             )
@@ -595,7 +768,6 @@ private fun SoloPracticeAndVaultCard(
     selectedDifficulty: SudokuDifficulty,
     onSelectDifficulty: (SudokuDifficulty) -> Unit,
     onPlaySolo: (SudokuSize, SudokuDifficulty) -> Unit,
-    onOpenShop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -612,12 +784,12 @@ private fun SoloPracticeAndVaultCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "SOLO PRACTICE & VAULT",
+                text = "SOLO PRACTICE",
                 style = MaterialTheme.typography.labelSmall,
                 color = SplitSignalColors.AccentEmerald,
             )
             Text(
-                text = "${progressionState.hintTokens} Hints · ${progressionState.solvedCount} Solved",
+                text = "${progressionState.hintTokens} Hints Â· ${progressionState.solvedCount} Solved",
                 style = MaterialTheme.typography.bodySmall,
                 color = SplitSignalColors.TextSecondary,
             )
@@ -644,201 +816,13 @@ private fun SoloPracticeAndVaultCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             HubSecondaryButton(
-                label = "6×6 Sprint",
+                label = "6Ã—6 Sprint",
                 onClick = { onPlaySolo(SudokuSize.SPRINT_6X6, selectedDifficulty) },
                 modifier = Modifier.weight(1f),
             )
             HubSecondaryButton(
-                label = "9×9 Classic",
+                label = "9A-9 Classic",
                 onClick = { onPlaySolo(SudokuSize.CLASSIC_9X9, selectedDifficulty) },
-                modifier = Modifier.weight(1f),
-            )
-            VaultShopButton(
-                onClick = onOpenShop,
-                modifier = Modifier.weight(0.85f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun VaultShopButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    OutlinedButton(
-        onClick = onClick,
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, CoinGold.copy(alpha = 0.55f)),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = CoinGold.copy(alpha = 0.1f),
-            contentColor = CoinGold,
-        ),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
-        modifier = modifier.pointerHoverIcon(PointerIcon.Hand),
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Storefront,
-            contentDescription = null,
-            tint = CoinGold,
-            modifier = Modifier.size(16.dp),
-        )
-        Spacer(modifier = Modifier.size(5.dp))
-        Text(
-            text = "Shop",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = CoinGold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun OtherCoopGamesSection(
-    isWide: Boolean,
-    onPlayMathSolo: () -> Unit,
-    onHostMathCoop: () -> Unit,
-    onPlayBattleshipAi: () -> Unit,
-    onHostBattleshipCoop: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(SplitSignalColors.CardSlate)
-            .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(14.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .pointerHoverIcon(PointerIcon.Hand)
-                .clickable(role = Role.Button) { expanded = !expanded }
-                .padding(vertical = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = "Other Co-op Games",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = SplitSignalColors.TextPrimary,
-                )
-                Text(
-                    text = "Math Deduction · Tactical Battleship",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SplitSignalColors.TextSecondary,
-                )
-            }
-            Icon(
-                imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                contentDescription = if (expanded) "Collapse other games" else "Expand other games",
-                tint = SplitSignalColors.TextSecondary,
-            )
-        }
-
-        AnimatedVisibility(visible = expanded) {
-            if (isWide) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    SecondaryCoopGameCard(
-                        codeLabel = "CO-OP MATH DEDUCTION",
-                        description = "3×3 Grid · Asymmetric Clues",
-                        primaryActionLabel = "2-Device",
-                        secondaryActionLabel = "Play Solo",
-                        onPrimaryAction = onHostMathCoop,
-                        onSecondaryAction = onPlayMathSolo,
-                        modifier = Modifier.weight(1f),
-                    )
-                    SecondaryCoopGameCard(
-                        codeLabel = "TACTICAL BATTLESHIP",
-                        description = "6×6 Fleet Duel · Sonar Scans",
-                        primaryActionLabel = "2-Device",
-                        secondaryActionLabel = "vs. Smart AI",
-                        onPrimaryAction = onHostBattleshipCoop,
-                        onSecondaryAction = onPlayBattleshipAi,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SecondaryCoopGameCard(
-                        codeLabel = "CO-OP MATH DEDUCTION",
-                        description = "3×3 Grid · Asymmetric Clues",
-                        primaryActionLabel = "2-Device",
-                        secondaryActionLabel = "Play Solo",
-                        onPrimaryAction = onHostMathCoop,
-                        onSecondaryAction = onPlayMathSolo,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    SecondaryCoopGameCard(
-                        codeLabel = "TACTICAL BATTLESHIP",
-                        description = "6×6 Fleet Duel · Sonar Scans",
-                        primaryActionLabel = "2-Device",
-                        secondaryActionLabel = "vs. Smart AI",
-                        onPrimaryAction = onHostBattleshipCoop,
-                        onSecondaryAction = onPlayBattleshipAi,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SecondaryCoopGameCard(
-    codeLabel: String,
-    description: String,
-    primaryActionLabel: String,
-    secondaryActionLabel: String,
-    onPrimaryAction: () -> Unit,
-    onSecondaryAction: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(SplitSignalColors.BgObsidian)
-            .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(10.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = codeLabel,
-                style = MaterialTheme.typography.labelSmall,
-                color = SplitSignalColors.AccentSand,
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = SplitSignalColors.TextSecondary,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            HubSecondaryButton(
-                label = secondaryActionLabel,
-                onClick = onSecondaryAction,
-                modifier = Modifier.weight(1f),
-            )
-            HubPrimaryButton(
-                label = primaryActionLabel,
-                onClick = onPrimaryAction,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -1239,12 +1223,12 @@ private fun DiscoveredRoomCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "●",
+                    text = "â—",
                     fontSize = 11.sp,
                     color = SplitSignalColors.AccentEmerald,
                 )
                 Text(
-                    text = "${room.roomCode} · ${room.gameType.displayName}",
+                    text = "${room.roomCode} Â· ${room.gameType.displayName}",
                     style = MaterialTheme.typography.titleSmall,
                     color = SplitSignalColors.TextPrimary,
                     maxLines = 1,
@@ -1371,7 +1355,6 @@ private fun GameTypeToggleRow(
     onSelectGameType: (GameType) -> Unit,
 ) {
     val duelModes = listOf(
-        GameType.TRIATHLON,
         GameType.CROSS_MATH,
         GameType.MINDSNAP,
         GameType.MEMORY_MATRIX,
@@ -1379,8 +1362,6 @@ private fun GameTypeToggleRow(
         GameType.KENKEN,
         GameType.SUDOKU_6X6,
         GameType.SUDOKU_9X9,
-        GameType.MATH,
-        GameType.BATTLESHIP,
     )
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1421,7 +1402,7 @@ private fun LinkRoleToggleRow(
                 color = SplitSignalColors.TextSecondary,
             )
             Text(
-                text = "Same board · Live progress bar",
+                text = "Same board Â· Live progress bar",
                 style = MaterialTheme.typography.labelMedium,
                 color = SplitSignalColors.AccentEmerald,
             )
@@ -1471,28 +1452,47 @@ private fun HubPillButton(
     val isHovered = interactionSource.collectIsHoveredAsState().value
     val isFocused = interactionSource.collectIsFocusedAsState().value
 
-    val bgColor = when {
-        isProminent -> accentColor.copy(alpha = if (isHovered) 0.24f else 0.16f)
-        isHovered -> SplitSignalColors.TileSurface
-        else -> SplitSignalColors.BgObsidian
+    val shape = RoundedCornerShape(8.dp)
+    val backgroundBrush = if (isProminent) {
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFF6875E8),
+                Color(0xFF5460D1),
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            listOf(
+                if (isHovered) Color(0xFF282C34) else Color(0xFF202328),
+                if (isHovered) Color(0xFF1E2126) else Color(0xFF15171A),
+            )
+        )
     }
-    val borderColor = when {
-        isFocused -> SplitSignalColors.AccentEmerald
-        isProminent -> accentColor.copy(alpha = 0.7f)
-        isHovered -> SplitSignalColors.AccentSand.copy(alpha = 0.5f)
-        else -> SplitSignalColors.BorderHairline
+
+    val borderBrush = if (isProminent) {
+        Brush.verticalGradient(
+            listOf(
+                Color(0x80FFFFFF),
+                Color(0x265460D1),
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            listOf(
+                if (isHovered) Color(0x4DFFFFFF) else Color(0x33FFFFFF),
+                Color(0x0DFFFFFF),
+            )
+        )
     }
-    val textColor = when {
-        isProminent -> accentColor
-        isHovered -> SplitSignalColors.TextPrimary
-        else -> SplitSignalColors.TextSecondary
-    }
+
+    val textColor = if (isProminent) Color.White else SplitSignalColors.TextPrimary
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(bgColor)
-            .border(if (isFocused) 1.5.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
+            .height(34.dp)
+            .clip(shape)
+            .background(backgroundBrush)
+            .border(1.dp, borderBrush, shape)
             .hoverable(interactionSource = interactionSource)
             .pointerHoverIcon(PointerIcon.Hand)
             .clickable(
@@ -1501,12 +1501,14 @@ private fun HubPillButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = if (isProminent) FontWeight.SemiBold else FontWeight.Medium,
+            ),
             color = textColor,
             maxLines = 1,
         )
@@ -1579,7 +1581,6 @@ private fun HubSecondaryButton(
 private fun MatiksTopStatusPill(
     progressionState: ProgressionState,
     onOpenStatsProfile: () -> Unit,
-    onOpenVaultShop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LinearCard(
@@ -1598,7 +1599,7 @@ private fun MatiksTopStatusPill(
                     color = SplitSignalColors.TextPrimary,
                 )
                 Text(
-                    text = "${progressionState.streakDays}d Streak · ${progressionState.coins} Coins · ${progressionState.elo} Elo",
+                    text = "${progressionState.streakDays}d Streak Â· ${progressionState.coins} Coins Â· ${progressionState.elo} Elo",
                     style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
                     color = SplitSignalColors.TextSecondary,
                     maxLines = 1,
@@ -1610,11 +1611,6 @@ private fun MatiksTopStatusPill(
                     label = progressionState.league.title.substringBefore(" "),
                     accentColor = SplitSignalColors.AccentIndigo,
                     onClick = onOpenStatsProfile,
-                )
-                MatiksChipButton(
-                    label = "Vault",
-                    accentColor = SplitSignalColors.AccentAmber,
-                    onClick = onOpenVaultShop,
                 )
             }
         }
@@ -1695,7 +1691,7 @@ private fun DailyWorkoutHeroCard(
                         color = SplitSignalColors.AccentIndigo,
                     )
                     Text(
-                        text = if (progressionState.dailyCompletedToday) "Daily Loop Complete ✓" else "4-Step Brain Workout ($completed/4)",
+                        text = if (progressionState.dailyCompletedToday) "Daily Loop Complete" else "4-Step Brain Workout ($completed/4)",
                         style = MaterialTheme.typography.headlineSmall,
                         color = SplitSignalColors.TextPrimary,
                     )
@@ -1703,7 +1699,7 @@ private fun DailyWorkoutHeroCard(
             }
             MatiksChipButton(
                 label = "6×6 Daily",
-                accentColor = SplitSignalColors.AccentAmber,
+                accentColor = SplitSignalColors.AccentIndigo,
                 onClick = onPlayDailySudoku,
             )
         }
@@ -1734,9 +1730,9 @@ private fun DailyWorkoutHeroCard(
             ) {
                 Text(
                     text = if (tier1Unlocked) {
-                        "Diamond Tier 1 (7d) ✓"
+                        "Diamond Tier 1 (7d)"
                     } else {
-                        "Diamond Tier 1 (7d) · ${streakDays.coerceAtMost(7)}/7d"
+                        "Diamond Tier 1 (7d) Â· ${streakDays.coerceAtMost(7)}/7d"
                     },
                     style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
                     color = if (tier1Unlocked) SplitSignalColors.AccentEmerald else SplitSignalColors.TextSecondary,
@@ -1764,9 +1760,9 @@ private fun DailyWorkoutHeroCard(
             ) {
                 Text(
                     text = if (tier2Unlocked) {
-                        "Tier 2 (30d) ✓"
+                        "Tier 2 (30d)"
                     } else {
-                        "Tier 2 (30d) · ${streakDays.coerceAtMost(30)}/30d"
+                        "Tier 2 (30d) Â· ${streakDays.coerceAtMost(30)}/30d"
                     },
                     style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
                     color = if (tier2Unlocked) SplitSignalColors.AccentIndigo else SplitSignalColors.TextMuted,
@@ -1806,14 +1802,27 @@ private fun DailyWorkoutHeroCard(
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = if (done) "✓ $label" else label,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (done) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (done) {
+                            SsIcon(
+                                icon = SsIcons.MaterialCheck,
+                                contentDescription = "Done",
+                                tint = SplitSignalColors.AccentEmerald,
+                                iconSize = 9.dp,
+                            )
+                        }
+                        Text(
+                            text = label,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (done) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
@@ -1846,9 +1855,8 @@ private fun LocalArenaDuelCard(
     onJoinRoom: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedDuelMode by remember { mutableStateOf(GameType.TRIATHLON) }
+    var selectedDuelMode by remember { mutableStateOf(GameType.CROSS_MATH) }
     val arenaModes = listOf(
-        GameType.TRIATHLON,
         GameType.CROSS_MATH,
         GameType.MINDSNAP,
         GameType.MEMORY_MATRIX,
@@ -1915,10 +1923,10 @@ private fun SixModesGridSection(
     modifier: Modifier = Modifier,
 ) {
     val entries = listOf(
-        Triple("Cross Math", "3×3 arithmetic crossword", onPlayCrossMath),
+        Triple("Cross Math", "3Ã—3 arithmetic crossword", onPlayCrossMath),
         Triple("Math Maze", "Pathfind to target sum", onPlayMathMaze),
-        Triple("KenKen", "4×4 arithmetic cages", onPlayKenKen),
-        Triple("Mini Sudoku", "6×6 speed grid", onPlayMiniSudoku),
+        Triple("KenKen", "4Ã—4 arithmetic cages", onPlayKenKen),
+        Triple("Mini Sudoku", "6Ã—6 speed grid", onPlayMiniSudoku),
         Triple("Memory Matrix", "2.0s flash & recall", onPlayMemoryMatrix),
         Triple("Mindsnap Blitz", "60s rapid combo drill", onPlayMindsnap),
     )

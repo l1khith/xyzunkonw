@@ -129,7 +129,7 @@ object MathLevelGenerator {
             ),
             MathClue(
                 id = 2,
-                statement = "Main diagonal (↘) sum = ${spec.targetDiagSum}",
+                statement = "Main diagonal sum = ${spec.targetDiagSum}",
                 liveStatus = "Current: $diag",
                 isSatisfied = diag == spec.targetDiagSum,
             ),

@@ -31,7 +31,7 @@ object SsColors {
     val AccentIndigo: Color = Color(0xFF5E6AD2)
     val AccentEmerald: Color = Color(0xFF26B57B)
     val AccentCrimson: Color = Color(0xFFE5484D)
-    val AccentAmber: Color = Color(0xFFF5A623)
+    val AccentAmber: Color = Color(0xFFFF9F1C)
 }
 
 /**

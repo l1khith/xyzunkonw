@@ -408,7 +408,7 @@ private fun NetworkScanCard(
                     Text(
                         text = "Start Scanning",
                         style = MaterialTheme.typography.labelMedium,
-                        color = SplitSignalColors.TextPrimary,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     )
                 }
@@ -597,7 +597,7 @@ private fun NetworkPendingRequestRow(
                     Text(
                         text = "Accept",
                         style = MaterialTheme.typography.labelMedium,
-                        color = SplitSignalColors.TextPrimary,
+                        color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                     )
                 }
@@ -632,68 +632,28 @@ private fun NetworkFriendInRangeRow(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(SplitSignalColors.AccentEmerald),
+                        .background(Color(0xFFF7F8F8)), // Monochrome online dot
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = peer.displayName,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = SplitSignalColors.TextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (peer.status == PeerStatus.IN_GAME) {
-                            Text(
-                                text = "IN GAME",
-                                style = LinearTextStyles.TabularLabel.copy(fontSize = 10.sp),
-                                color = SplitSignalColors.AccentAmber,
-                            )
-                        }
-                    }
-                    Text(
-                        text = peer.userId,
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                        color = SplitSignalColors.TextSecondary,
-                    )
-                    Text(
-                        text = "ELO ${peer.elo} | Streak ${peer.streakDays}d",
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                        color = SplitSignalColors.AccentIndigo,
-                    )
-                }
+                Text(
+                    text = "${peer.displayName} · ${peer.userId}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SplitSignalColors.TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            TactileTile(
+                onClick = onChat,
+                backgroundColor = SplitSignalColors.AccentIndigo,
+                restingBorderColor = SplitSignalColors.AccentIndigo,
+                cornerRadius = 8.dp,
             ) {
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.ChatBubbleOutline,
-                    contentDescription = "Chat with ${peer.displayName}",
-                    tint = SplitSignalColors.TextPrimary,
-                    onClick = onChat,
-                )
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.SportsEsports,
-                    contentDescription = "Duel ${peer.displayName}",
-                    tint = SplitSignalColors.AccentIndigo,
-                    onClick = onDuel,
-                )
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.AttachFile,
-                    contentDescription = "Send file to ${peer.displayName}",
-                    tint = SplitSignalColors.TextPrimary,
-                    onClick = onSendFile,
-                )
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.PersonRemove,
-                    contentDescription = "Remove ${peer.displayName}",
-                    tint = SplitSignalColors.TextSecondary,
-                    onClick = onRemove,
+                Text(
+                    text = "Chat",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                 )
             }
         }
@@ -716,38 +676,23 @@ private fun NetworkDiscoveredPeerRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
+            Row(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = peer.displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = SplitSignalColors.TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (peer.status == PeerStatus.IN_GAME) {
-                        Text(
-                            text = "IN GAME",
-                            style = LinearTextStyles.TabularLabel.copy(fontSize = 10.sp),
-                            color = SplitSignalColors.AccentAmber,
-                        )
-                    }
-                }
-                Text(
-                    text = peer.userId,
-                    style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                    color = SplitSignalColors.TextSecondary,
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .border(1.5.dp, SplitSignalColors.TextSecondary, CircleShape),
                 )
                 Text(
-                    text = "ELO ${peer.elo} | Streak ${peer.streakDays}d",
-                    style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                    color = SplitSignalColors.TextMuted,
+                    text = "${peer.displayName} · ${peer.userId}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = SplitSignalColors.TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
@@ -757,40 +702,30 @@ private fun NetworkDiscoveredPeerRow(
             ) {
                 TactileTile(
                     onClick = onAddFriend,
+                    backgroundColor = SplitSignalColors.SurfaceTile,
+                    restingBorderColor = SplitSignalColors.BorderSubtle,
+                    cornerRadius = 8.dp,
+                ) {
+                    Text(
+                        text = "+Add",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = SplitSignalColors.TextPrimary,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                    )
+                }
+                TactileTile(
+                    onClick = onChat,
                     backgroundColor = SplitSignalColors.AccentIndigo,
                     restingBorderColor = SplitSignalColors.AccentIndigo,
                     cornerRadius = 8.dp,
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.PersonAdd,
-                            contentDescription = "Add Friend",
-                            tint = SplitSignalColors.TextPrimary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text = "Add Friend",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = SplitSignalColors.TextPrimary,
-                        )
-                    }
+                    Text(
+                        text = "Chat",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    )
                 }
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.ChatBubbleOutline,
-                    contentDescription = "Chat with ${peer.displayName}",
-                    tint = SplitSignalColors.TextPrimary,
-                    onClick = onChat,
-                )
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.AttachFile,
-                    contentDescription = "Send file to ${peer.displayName}",
-                    tint = SplitSignalColors.TextPrimary,
-                    onClick = onSendFile,
-                )
             }
         }
     }
@@ -814,54 +749,19 @@ private fun NetworkOfflineFriendRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
+            Text(
+                text = "${friend.displayName} · ${friend.userId}",
+                style = MaterialTheme.typography.titleMedium,
+                color = SplitSignalColors.TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(SplitSignalColors.TextMuted),
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        text = friend.displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = SplitSignalColors.TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = friend.userId,
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                        color = SplitSignalColors.TextMuted,
-                    )
-                    Text(
-                        text = "ELO ${friend.elo} | Streak ${friend.streakDays}d",
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                        color = SplitSignalColors.TextMuted,
-                    )
-                }
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "History",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = SplitSignalColors.TextSecondary,
-                )
-                NetworkActionIconButton(
-                    icon = Icons.Rounded.PersonRemove,
-                    contentDescription = "Remove ${friend.displayName}",
-                    tint = SplitSignalColors.TextSecondary,
-                    onClick = onRemove,
-                )
-            }
+            )
+            Text(
+                text = "Last: 2d",
+                style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
+                color = SplitSignalColors.TextMuted,
+            )
         }
     }
 }

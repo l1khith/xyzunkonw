@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "578438329095",
+    "project_id": "splitsignal-5b6fa",
+    "storage_bucket": "splitsignal-5b6fa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:578438329095:android:bc6a703d7a998ff8310ba2",
+        "android_client_info": {
+          "package_name": "com.splitsignal.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPerkJqDaHfbL7f9XQT5R52zkOepjVOm4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

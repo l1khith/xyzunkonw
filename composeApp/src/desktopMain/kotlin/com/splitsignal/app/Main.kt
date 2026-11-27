@@ -27,7 +27,6 @@ import com.splitsignal.app.di.initKoin
 import com.splitsignal.app.presentation.AppScreen
 import com.splitsignal.app.presentation.LinkTab
 import com.splitsignal.app.presentation.SplitSignalAppUiState
-import com.splitsignal.app.ui.BattleshipScreen
 import com.splitsignal.app.ui.MathPuzzleScreen
 import com.splitsignal.app.ui.SplitSignalColors
 import com.splitsignal.app.ui.SplitSignalTheme
@@ -134,92 +133,9 @@ private fun DualJudgeDemoWindows(
         position = WindowPosition(x = 640.dp, y = 80.dp),
     )
 
-    when (session.gameType) {
-        GameType.BATTLESHIP -> {
-            val seed = remember(session.sessionId) {
-                Fnv1a.hash32("JUDGE_DEMO_SHIP:${session.sessionId}")
-            }
-            val p1Engine = remember(session.sessionId) {
-                BattleshipEngine(
-                    localRole = PlayerRole.OPERATOR,
-                    seed = seed,
-                    vsAi = false,
-                    transport = hostTransport,
-                    scope = demoScope,
-                )
-            }
-            val p2Engine = remember(session.sessionId) {
-                BattleshipEngine(
-                    localRole = PlayerRole.ANALYST,
-                    seed = seed,
-                    vsAi = false,
-                    transport = clientTransport,
-                    scope = demoScope,
-                )
-            }
-            DisposableEffect(session.sessionId) {
-                onDispose {
-                    p1Engine.dispose()
-                    p2Engine.dispose()
-                    hostTransport.close()
-                    clientTransport.close()
-                }
-            }
-
-            val p1State by p1Engine.state.collectAsState()
-            val p2State by p2Engine.state.collectAsState()
-
-            Window(
-                onCloseRequest = onClose,
-                title = "Player 1 — Fleet Grid (Judge Demo)",
-                state = leftWindowState,
-            ) {
-                SplitSignalTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize().background(SplitSignalColors.BgObsidian),
-                        color = SplitSignalColors.BgObsidian,
-                    ) {
-                        BattleshipScreen(
-                            state = p1State,
-                            roomCode = "DEMO",
-                            widthSizeClass = WindowWidthSizeClass.Compact,
-                            onFire = { idx -> demoScope.launch { p1Engine.fireAt(idx) } },
-                            onSonar = { idx -> demoScope.launch { p1Engine.sonarScan(idx) } },
-                            onRestart = { demoScope.launch { p1Engine.restart() } },
-                            onExit = onClose,
-                        )
-                    }
-                }
-            }
-
-            Window(
-                onCloseRequest = onClose,
-                title = "Player 2 — Fleet Grid (Judge Demo)",
-                state = rightWindowState,
-            ) {
-                SplitSignalTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize().background(SplitSignalColors.BgObsidian),
-                        color = SplitSignalColors.BgObsidian,
-                    ) {
-                        BattleshipScreen(
-                            state = p2State,
-                            roomCode = "DEMO",
-                            widthSizeClass = WindowWidthSizeClass.Compact,
-                            onFire = { idx -> demoScope.launch { p2Engine.fireAt(idx) } },
-                            onSonar = { idx -> demoScope.launch { p2Engine.sonarScan(idx) } },
-                            onRestart = { demoScope.launch { p2Engine.restart() } },
-                            onExit = onClose,
-                        )
-                    }
-                }
-            }
-        }
-
-        else -> {
-            val seed = remember(session.sessionId) {
-                Fnv1a.hash32("JUDGE_DEMO_MATH:${session.sessionId}")
-            }
+    val seed = remember(session.sessionId) {
+        Fnv1a.hash32("JUDGE_DEMO_MATH:${session.sessionId}")
+    }
             val p1Engine = remember(session.sessionId) {
                 MathPuzzleEngine(
                     role = PlayerRole.OPERATOR,
@@ -304,8 +220,6 @@ private fun DualJudgeDemoWindows(
                     }
                 }
             }
-        }
-    }
 }
 
 private fun buildBaseDemoUiState(seed: UInt): SplitSignalAppUiState {

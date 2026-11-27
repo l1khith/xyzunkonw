@@ -89,10 +89,8 @@ enum class AppScreen {
     KENKEN,
     MEMORY_MATRIX,
     MINDSNAP,
-    VAULT_SHOP,
     STATS_PROFILE,
     MATH_SOLO,
-    BATTLESHIP_AI,
     COOP_ACTIVE,
 }
 
@@ -424,7 +422,7 @@ class SplitSignalStateHolder(
     /**
      * Sends a quick P2P game invite to [peer] for [gameType].
      */
-    fun sendQuickGameInvite(peer: DiscoveredPeer, gameType: GameType = GameType.BATTLESHIP) {
+    fun sendQuickGameInvite(peer: DiscoveredPeer, gameType: GameType = GameType.SUDOKU_6X6) {
         duelPeer(peer, gameType)
     }
 
@@ -635,7 +633,7 @@ class SplitSignalStateHolder(
      * Challenges [peer] to a P2P [gameType] match by sending a [SyncPacket.GameInvite]
      * with a deterministic seed and listening for [SyncPacket.GameInviteResponse].
      */
-    fun duelPeer(peer: DiscoveredPeer, gameType: GameType = GameType.BATTLESHIP) {
+    fun duelPeer(peer: DiscoveredPeer, gameType: GameType = GameType.SUDOKU_6X6) {
         duelInviteJob?.cancel()
         val seed = Fnv1a.hash32("CHALLENGE:${peer.userId}:${matiksNonce++}")
         val self = identityStore.identity.value
@@ -815,29 +813,6 @@ class SplitSignalStateHolder(
      */
     fun openSudokuRaceLink(initialTab: LinkTab = LinkTab.HOST) {
         openLocalLink(gameType = GameType.SUDOKU_6X6, initialTab = initialTab)
-    }
-
-    /**
-     * Opens the Vault Shop screen for themes, streak freezes, and hint tokens.
-     */
-    fun openVaultShop() {
-        AppLoggerBridge.logScreen("SCREEN_VAULT")
-        stopLanActivity()
-        disposeCurrentSession()
-        _uiState.update { current ->
-            current.copy(
-                screen = AppScreen.VAULT_SHOP,
-                nearbyRooms = emptyList(),
-                lastSolveReward = null,
-                isTriathlonActive = false,
-                isDailyWorkoutRun = false,
-                hostAddress = null,
-                hostInviteToken = "",
-                connectedClients = 0,
-                clientConnectionState = TransportConnectionState.DISCONNECTED,
-                clientValidationError = null,
-            )
-        }
     }
 
     /**
@@ -1286,45 +1261,6 @@ class SplitSignalStateHolder(
     }
 
     /**
-     * Launches Tactical Battleship in single-player mode against the Smart AI.
-     */
-    fun startBattleshipAi() {
-        stopLanActivity()
-        disposeCurrentSession()
-
-        val loopback = InMemorySyncPipe().localLoopback
-        soloPipeHost = loopback
-
-        battleshipNonce++
-        val seed = Fnv1a.hash32("BATTLESHIP_AI:$battleshipNonce")
-        val engine = BattleshipEngine(
-            localRole = PlayerRole.OPERATOR,
-            seed = seed,
-            vsAi = true,
-            transport = loopback,
-            scope = scope,
-        )
-        soloBattleshipEngine = engine
-
-        _uiState.update { current ->
-            current.copy(
-                screen = AppScreen.BATTLESHIP_AI,
-                gameMode = GameMode.SOLO_SPLIT,
-                selectedGameType = GameType.BATTLESHIP,
-                nearbyRooms = emptyList(),
-                battleshipState = engine.state.value,
-                activeRole = PlayerRole.OPERATOR,
-                hostAddress = null,
-                hostInviteToken = "",
-                connectedClients = 0,
-                clientConnectionState = TransportConnectionState.DISCONNECTED,
-                clientValidationError = null,
-            )
-        }
-        observeActiveSession()
-    }
-
-    /**
      * Opens the unified 2-Device Local Link lobby for [gameType] on [initialTab].
      */
     fun openLocalLink(gameType: GameType, initialTab: LinkTab = LinkTab.HOST) {
@@ -1452,16 +1388,6 @@ class SplitSignalStateHolder(
         val engine = activeBattleshipEngine() ?: return
         scope.launch {
             engine.sonarScan(cellIndex)
-        }
-    }
-
-    /**
-     * Restarts the active Tactical Battleship match with a fresh fleet layout.
-     */
-    fun restartBattleship() {
-        val engine = activeBattleshipEngine() ?: return
-        scope.launch {
-            engine.restart()
         }
     }
 
@@ -1690,7 +1616,7 @@ class SplitSignalStateHolder(
         if (!canHostLan || socialHostPort <= 0) return
         val progression = progressionStore.state.value
         val screen = state.screen
-        val status = if (screen == AppScreen.HUB || screen == AppScreen.STATS_PROFILE || screen == AppScreen.VAULT_SHOP) {
+        val status = if (screen == AppScreen.HUB || screen == AppScreen.STATS_PROFILE) {
             PeerStatus.ONLINE
         } else {
             PeerStatus.IN_GAME

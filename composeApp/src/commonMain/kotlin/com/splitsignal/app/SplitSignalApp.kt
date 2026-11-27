@@ -387,7 +387,6 @@ fun SplitSignalApp(
                 if (uiState.isChatSheetOpen) {
                     DirectChatSheet(
                         sessionState = uiState.chatUiState,
-                        mediaBridge = mediaBridge,
                         onSendMessage = resolvedHolder::sendChatMessage,
                         onTypingChanged = resolvedHolder::sendTypingIndicator,
                         onAttachFile = {

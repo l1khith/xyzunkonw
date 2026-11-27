@@ -68,7 +68,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.splitsignal.app.platform.PlatformMediaBridge
 import com.splitsignal.core.domain.ChatMessageRecord
 import com.splitsignal.core.domain.ChatSessionUiState
 import com.splitsignal.core.domain.FileTransferItem
@@ -84,7 +83,6 @@ import com.splitsignal.core.domain.formatByteSize
 @Composable
 fun DirectChatSheet(
     sessionState: ChatSessionUiState,
-    mediaBridge: PlatformMediaBridge,
     onSendMessage: (String) -> Unit,
     onTypingChanged: (Boolean) -> Unit,
     onAttachFile: () -> Unit,

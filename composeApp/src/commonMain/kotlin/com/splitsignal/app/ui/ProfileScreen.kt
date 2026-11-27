@@ -1,6 +1,9 @@
 package com.splitsignal.app.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -63,6 +67,7 @@ import com.splitsignal.core.domain.TransferStatus
 import com.splitsignal.core.domain.UserIdentity
 import com.splitsignal.core.domain.formatByteSize
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val AvatarAccentPalette: List<Color> = listOf(
     SplitSignalColors.AccentIndigo,
@@ -104,6 +109,33 @@ fun ProfileScreen(
     val totalWins = friends.sumOf { it.duelWins }
     val totalLosses = friends.sumOf { it.duelLosses }
 
+    val animBlock1 = remember { Animatable(0f) }
+    val animBlock2 = remember { Animatable(0f) }
+    val animBlock3 = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        launch {
+            animBlock1.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+            )
+        }
+        delay(80)
+        launch {
+            animBlock2.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+            )
+        }
+        delay(80)
+        launch {
+            animBlock3.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+            )
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -121,7 +153,14 @@ fun ProfileScreen(
             var isEditingName by remember { mutableStateOf(false) }
 
             // User Identity Card: Name [Edit] + ID: KMP-XXXX [Copy]
-            LinearCard(modifier = Modifier.fillMaxWidth()) {
+            LinearCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = animBlock1.value
+                        translationY = (1f - animBlock1.value) * 36.dp.toPx()
+                    },
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -232,6 +271,10 @@ fun ProfileScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = animBlock2.value
+                        translationY = (1f - animBlock2.value) * 36.dp.toPx()
+                    }
                     .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
@@ -274,177 +317,187 @@ fun ProfileScreen(
                 }
             }
 
-            // Section: RECENT TRANSFERS & MATCHES
-            val recentActivities = remember(transfers, progression) {
-                buildList {
-                    transfers.filter { it.status == TransferStatus.COMPLETED }.forEach { t ->
-                        add(t.fileName to formatByteSize(t.fileSizeBytes))
-                    }
-                    if (progression.dailyCompletedToday) {
-                        add("Daily Workout" to "Completed today")
-                    }
-                    progression.modeClears.forEach { (gameType, clears) ->
-                        if (clears > 0) {
-                            add(gameType.displayName to "$clears solved")
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = animBlock3.value
+                        translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                    },
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                // Section: RECENT TRANSFERS & MATCHES
+                val recentActivities = remember(transfers, progression) {
+                    buildList {
+                        transfers.filter { it.status == TransferStatus.COMPLETED }.forEach { t ->
+                            add(t.fileName to formatByteSize(t.fileSizeBytes))
                         }
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "RECENT TRANSFERS & MATCHES",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                    color = SplitSignalColors.TextSecondary,
-                )
-                if (recentActivities.isEmpty()) {
-                    LinearCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "No recent transfers or matches yet. Solved games and LAN file transfers will appear here.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = SplitSignalColors.TextSecondary,
-                        )
-                    }
-                } else {
-                    recentActivities.take(5).forEach { (title, subtitle) ->
-                        LinearCard(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Check,
-                                    contentDescription = null,
-                                    tint = Color(0xFF26B57B),
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Text(
-                                    text = "$title · $subtitle",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = SplitSignalColors.TextPrimary,
-                                )
+                        if (progression.dailyCompletedToday) {
+                            add("Daily Workout" to "Completed today")
+                        }
+                        progression.modeClears.forEach { (gameType, clears) ->
+                            if (clears > 0) {
+                                add(gameType.displayName to "$clears solved")
                             }
                         }
                     }
                 }
-            }
 
-            // Nearby Visibility (Public / Friends / Private)
-            NearbyVisibilityCard(
-                currentMode = identity.privacyMode,
-                onSelectMode = onUpdatePrivacyMode,
-            )
-
-            // Quick link to Cognitive Stats
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                TactileTile(
-                    onClick = onOpenCognitiveStats,
-                    backgroundColor = SplitSignalColors.SurfaceCard,
-                    restingBorderColor = SplitSignalColors.BorderSubtle,
-                    cornerRadius = 12.dp,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.BarChart,
-                            contentDescription = "Cognitive Stats",
-                            tint = SplitSignalColors.AccentIndigo,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "RECENT TRANSFERS & MATCHES",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                        color = SplitSignalColors.TextSecondary,
+                    )
+                    if (recentActivities.isEmpty()) {
+                        LinearCard(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = "Cognitive Stats",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = SplitSignalColors.TextPrimary,
-                            )
-                            Text(
-                                text = "Elo ${progression.elo}",
-                                style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
+                                text = "No recent transfers or matches yet. Solved games and LAN file transfers will appear here.",
+                                style = MaterialTheme.typography.bodySmall,
                                 color = SplitSignalColors.TextSecondary,
                             )
+                        }
+                    } else {
+                        recentActivities.take(5).forEach { (title, subtitle) ->
+                            LinearCard(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        tint = Color(0xFF26B57B),
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Text(
+                                        text = "$title · $subtitle",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = SplitSignalColors.TextPrimary,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
 
-            }
+                // Nearby Visibility (Public / Friends / Private)
+                NearbyVisibilityCard(
+                    currentMode = identity.privacyMode,
+                    onSelectMode = onUpdatePrivacyMode,
+                )
 
-            // Head-to-head duel stats across saved friends
-            LinearCard(modifier = Modifier.fillMaxWidth()) {
+                // Quick link to Cognitive Stats
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text(
-                        text = "HEAD-TO-HEAD DUEL STATS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = SplitSignalColors.TextSecondary,
-                    )
-                    Text(
-                        text = "${totalWins}W–${totalLosses}L",
-                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                        color = SplitSignalColors.AccentEmerald,
-                    )
+                    TactileTile(
+                        onClick = onOpenCognitiveStats,
+                        backgroundColor = SplitSignalColors.SurfaceCard,
+                        restingBorderColor = SplitSignalColors.BorderSubtle,
+                        cornerRadius = 12.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.BarChart,
+                                contentDescription = "Cognitive Stats",
+                                tint = SplitSignalColors.AccentIndigo,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                Text(
+                                    text = "Cognitive Stats",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = SplitSignalColors.TextPrimary,
+                                )
+                                Text(
+                                    text = "Elo ${progression.elo}",
+                                    style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
+                                    color = SplitSignalColors.TextSecondary,
+                                )
+                            }
+                        }
+                    }
+
                 }
 
-                if (friends.isEmpty()) {
-                    Text(
-                        text = "No saved friends yet. Add peers from Nearby to track head-to-head duel records.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SplitSignalColors.TextSecondary,
-                    )
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        friends.forEach { friend ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(SplitSignalColors.SurfaceTile)
-                                    .border(1.dp, SplitSignalColors.BorderSubtle, RoundedCornerShape(10.dp))
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                                ) {
-                                    Text(
-                                        text = friend.displayName,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = SplitSignalColors.TextPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        text = friend.userId,
-                                        style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                                        color = SplitSignalColors.TextSecondary,
-                                    )
-                                }
+                // Head-to-head duel stats across saved friends
+                LinearCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "HEAD-TO-HEAD DUEL STATS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SplitSignalColors.TextSecondary,
+                        )
+                        Text(
+                            text = "${totalWins}W–${totalLosses}L",
+                            style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
+                            color = SplitSignalColors.AccentEmerald,
+                        )
+                    }
 
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    Text(
-                                        text = "${friend.duelWins}W",
-                                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                                        color = SplitSignalColors.AccentEmerald,
-                                    )
-                                    Text(
-                                        text = "${friend.duelLosses}L",
-                                        style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                                        color = SplitSignalColors.TextSecondary,
-                                    )
+                    if (friends.isEmpty()) {
+                        Text(
+                            text = "No saved friends yet. Add peers from Nearby to track head-to-head duel records.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SplitSignalColors.TextSecondary,
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            friends.forEach { friend ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(SplitSignalColors.SurfaceTile)
+                                        .border(1.dp, SplitSignalColors.BorderSubtle, RoundedCornerShape(10.dp))
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                                    ) {
+                                        Text(
+                                            text = friend.displayName,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = SplitSignalColors.TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = friend.userId,
+                                            style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
+                                            color = SplitSignalColors.TextSecondary,
+                                        )
+                                    }
+
+                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Text(
+                                            text = "${friend.duelWins}W",
+                                            style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
+                                            color = SplitSignalColors.AccentEmerald,
+                                        )
+                                        Text(
+                                            text = "${friend.duelLosses}L",
+                                            style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
+                                            color = SplitSignalColors.TextSecondary,
+                                        )
+                                    }
                                 }
                             }
                         }

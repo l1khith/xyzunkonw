@@ -1,5 +1,7 @@
 package com.splitsignal.app.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -41,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,12 +55,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.sp
 import com.splitsignal.core.domain.DiscoveredPeer
 import com.splitsignal.core.domain.FriendRecord
@@ -136,6 +142,33 @@ fun NetworkScreen(
 
     val onlineCount = nearbyState.friendsInRange.size + nearbyState.unknownNearby.size
 
+    val animBlock1 = remember { Animatable(0f) }
+    val animBlock2 = remember { Animatable(0f) }
+    val animBlock3 = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        launch {
+            animBlock1.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+            )
+        }
+        delay(80)
+        launch {
+            animBlock2.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+            )
+        }
+        delay(80)
+        launch {
+            animBlock3.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+            )
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -150,88 +183,187 @@ fun NetworkScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "header") {
-                NetworkHeader(onlineCount = onlineCount)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = animBlock1.value
+                            translationY = (1f - animBlock1.value) * 36.dp.toPx()
+                        },
+                ) {
+                    NetworkHeader(onlineCount = onlineCount)
+                }
             }
 
             item(key = "radar_card") {
-                NetworkScanCard(
-                    isScanning = isScanning,
-                    nearbyCount = onlineCount,
-                    onToggleScan = onToggleScan,
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = animBlock1.value
+                            translationY = (1f - animBlock1.value) * 36.dp.toPx()
+                        },
+                ) {
+                    NetworkScanCard(
+                        isScanning = isScanning,
+                        nearbyCount = onlineCount,
+                        onToggleScan = onToggleScan,
+                    )
+                }
             }
 
             item(key = "search_bar") {
-                NetworkSearchBar(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = animBlock2.value
+                            translationY = (1f - animBlock2.value) * 36.dp.toPx()
+                        },
+                ) {
+                    NetworkSearchBar(
+                        query = searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                    )
+                }
             }
 
             if (filteredRequests.isNotEmpty()) {
                 item(key = "section_pending") {
-                    NetworkSectionHeader(title = "PENDING REQUESTS (${filteredRequests.size})")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkSectionHeader(title = "PENDING REQUESTS (${filteredRequests.size})")
+                    }
                 }
                 items(
                     items = filteredRequests,
                     key = { "req_${it.fromUserId}" },
                 ) { request ->
-                    NetworkPendingRequestRow(
-                        request = request,
-                        onAccept = { onAcceptRequest(request) },
-                        onDecline = { onDeclineRequest(request) },
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkPendingRequestRow(
+                            request = request,
+                            onAccept = { onAcceptRequest(request) },
+                            onDecline = { onDeclineRequest(request) },
+                        )
+                    }
                 }
             }
 
             if (filteredFriendsInRange.isNotEmpty()) {
                 item(key = "section_friends_in_range") {
-                    NetworkSectionHeader(title = "FRIENDS IN RANGE (${filteredFriendsInRange.size})")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkSectionHeader(title = "FRIENDS IN RANGE (${filteredFriendsInRange.size})")
+                    }
                 }
                 items(
                     items = filteredFriendsInRange,
                     key = { "friend_online_${it.userId}" },
                 ) { peer ->
-                    NetworkFriendInRangeRow(
-                        peer = peer,
-                        onChat = { onChatPeer(peer) },
-                        onDuel = { onDuelPeer(peer) },
-                        onSendFile = { onSendFileToPeer(peer) },
-                        onRemove = { friendPendingRemoval = peer.userId to peer.displayName },
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkFriendInRangeRow(
+                            peer = peer,
+                            onChat = { onChatPeer(peer) },
+                            onDuel = { onDuelPeer(peer) },
+                            onSendFile = { onSendFileToPeer(peer) },
+                            onRemove = { friendPendingRemoval = peer.userId to peer.displayName },
+                        )
+                    }
                 }
             }
 
             if (filteredUnknownNearby.isNotEmpty()) {
                 item(key = "section_discovered") {
-                    NetworkSectionHeader(title = "DISCOVERED ON LOCAL WI-FI (${filteredUnknownNearby.size})")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkSectionHeader(title = "DISCOVERED ON LOCAL WI-FI (${filteredUnknownNearby.size})")
+                    }
                 }
                 items(
                     items = filteredUnknownNearby,
                     key = { "discovered_${it.userId}" },
                 ) { peer ->
-                    NetworkDiscoveredPeerRow(
-                        peer = peer,
-                        onAddFriend = { pendingAddFriendPeer = peer },
-                        onChat = { onChatPeer(peer) },
-                        onSendFile = { onSendFileToPeer(peer) },
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkDiscoveredPeerRow(
+                            peer = peer,
+                            onAddFriend = { pendingAddFriendPeer = peer },
+                            onChat = { onChatPeer(peer) },
+                            onSendFile = { onSendFileToPeer(peer) },
+                        )
+                    }
                 }
             }
 
             if (filteredOfflineFriends.isNotEmpty()) {
                 item(key = "section_offline") {
-                    NetworkSectionHeader(title = "OFFLINE FRIENDS (${filteredOfflineFriends.size})")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkSectionHeader(title = "OFFLINE FRIENDS (${filteredOfflineFriends.size})")
+                    }
                 }
                 items(
                     items = filteredOfflineFriends,
                     key = { "friend_offline_${it.userId}" },
                 ) { friend ->
-                    NetworkOfflineFriendRow(
-                        friend = friend,
-                        onClick = { onViewOfflineFriend(friend) },
-                        onRemove = { friendPendingRemoval = friend.userId to friend.displayName },
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkOfflineFriendRow(
+                            friend = friend,
+                            onClick = { onViewOfflineFriend(friend) },
+                            onRemove = { friendPendingRemoval = friend.userId to friend.displayName },
+                        )
+                    }
                 }
             }
 
@@ -242,10 +374,19 @@ fun NetworkScreen(
                 filteredOfflineFriends.isEmpty()
             ) {
                 item(key = "empty_state") {
-                    NetworkEmptyStateCard(
-                        isScanning = isScanning,
-                        hasFilter = trimmedQuery.isNotEmpty(),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = animBlock3.value
+                                translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                            },
+                    ) {
+                        NetworkEmptyStateCard(
+                            isScanning = isScanning,
+                            hasFilter = trimmedQuery.isNotEmpty(),
+                        )
+                    }
                 }
             }
         }

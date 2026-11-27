@@ -2,6 +2,7 @@
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -447,8 +448,6 @@ fun SplitSignalApp(
                                 autoSaveFiles = autoSave,
                             )
                         },
-                        onCycleAccent = resolvedHolder::cycleAvatarAccent,
-                        onClearData = resolvedHolder::clearLocalData,
                         onClose = { showSettingsModal = false },
                     )
                 }
@@ -573,8 +572,17 @@ private fun HubTabContent(
     onPickFileForPeer: (com.splitsignal.core.domain.DiscoveredPeer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier) {
-        when (uiState.activeTab) {
+    AnimatedContent(
+        targetState = uiState.activeTab,
+        transitionSpec = {
+            (slideInVertically(animationSpec = tween(220, easing = FastOutSlowInEasing)) { it / 24 } +
+                fadeIn(animationSpec = tween(200))) togetherWith
+                fadeOut(animationSpec = tween(140))
+        },
+        label = "HubTabTransition",
+        modifier = modifier.fillMaxSize(),
+    ) { targetTab ->
+        when (targetTab) {
             MainTab.PLAY -> GamesHubScreen(
                 progressionState = uiState.progressionState,
                 selectedDifficulty = uiState.selectedSudokuDifficulty,

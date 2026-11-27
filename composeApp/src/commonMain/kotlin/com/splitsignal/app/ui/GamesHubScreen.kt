@@ -152,8 +152,152 @@ fun GamesHubScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // 1. TODAY'S DAILY WORKOUT CARD
+            LinearCard(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = 16.dp,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier.size(52.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                drawArc(
+                                    color = Color(0xFF1F2228),
+                                    startAngle = -90f,
+                                    sweepAngle = 360f,
+                                    useCenter = false,
+                                    style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
+                                )
+                                val completedFraction = (progressionState.dailyStepsCompleted.coerceIn(0, 4) / 4f)
+                                val sweepFraction = if (progressionState.dailyCompletedToday) 1f else (0.25f + completedFraction * 0.75f)
+                                drawArc(
+                                    color = if (progressionState.dailyCompletedToday) SplitSignalColors.AccentEmerald else SplitSignalColors.AccentIndigo,
+                                    startAngle = -90f,
+                                    sweepAngle = 360f * sweepFraction,
+                                    useCenter = false,
+                                    style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
+                                )
+                            }
+                            Text(
+                                text = "${progressionState.dailyStepsCompleted}/4",
+                                style = LinearTextStyles.TabularDigit.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                                color = if (progressionState.dailyCompletedToday) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
+                            )
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "DAILY WORKOUT",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SplitSignalColors.AccentIndigo,
+                            )
+                            Text(
+                                text = if (progressionState.dailyCompletedToday) "Workout Completed" else "4-Step Brain Circuit",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    letterSpacing = (-0.2).sp,
+                                ),
+                                color = SplitSignalColors.TextPrimary,
+                            )
+                            Text(
+                                text = "${progressionState.streakDays} Day Streak · +50 ELO Bonus",
+                                style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp, color = SplitSignalColors.TextSecondary),
+                            )
+                        }
+                    }
+                    HubPillButton(
+                        label = if (progressionState.dailyCompletedToday) "Completed" else "Start Step",
+                        accentColor = SplitSignalColors.AccentIndigo,
+                        isProminent = !progressionState.dailyCompletedToday,
+                        onClick = onStartDailyWorkout,
+                    )
+                }
+            }
+
+            // 2. 1V1 LOCAL ARENA DUEL CARD
+            LinearCard(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = 16.dp,
+            ) {
+                var selectedDuelMode by remember { mutableStateOf(GameType.SUDOKU_6X6) }
+                val duelModes = listOf(
+                    GameType.SUDOKU_6X6,
+                    GameType.CROSS_MATH,
+                    GameType.KENKEN,
+                    GameType.MINDSNAP,
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "1V1 LOCAL ARENA",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SplitSignalColors.TextSecondary,
+                        )
+                        Text(
+                            text = "Local Wi-Fi Race",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = (-0.2).sp,
+                            ),
+                            color = SplitSignalColors.TextPrimary,
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        duelModes.forEach { mode ->
+                            HubPillButton(
+                                label = when (mode) {
+                                    GameType.SUDOKU_6X6 -> "Sudoku"
+                                    GameType.CROSS_MATH -> "Cross Math"
+                                    GameType.KENKEN -> "KenKen"
+                                    else -> "Mindsnap"
+                                },
+                                accentColor = SplitSignalColors.AccentIndigo,
+                                isProminent = selectedDuelMode == mode,
+                                onClick = { selectedDuelMode = mode },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        HubPillButton(
+                            label = "Host Duel",
+                            accentColor = SplitSignalColors.AccentIndigo,
+                            isProminent = true,
+                            onClick = { onHostDuel(selectedDuelMode) },
+                            modifier = Modifier.weight(1f),
+                        )
+                        HubPillButton(
+                            label = "Join Room",
+                            accentColor = SplitSignalColors.TextPrimary,
+                            isProminent = false,
+                            onClick = onJoinSudokuRace,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+
+            // 3. SOLO PRACTICE SECTION
             Text(
-                text = "SELECT GAME",
+                text = "SOLO PRACTICE",
                 style = MaterialTheme.typography.labelSmall,
                 color = SplitSignalColors.TextSecondary,
             )
@@ -468,366 +612,6 @@ fun LocalLinkScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SudokuStatusTopBar(
-    progressionState: ProgressionState,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(SplitSignalColors.CardSlate)
-            .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = "SUDOKU DUEL",
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                letterSpacing = 1.4.sp,
-                color = SplitSignalColors.TextPrimary,
-                maxLines = 1,
-            )
-            Text(
-                text = "Elo ${progressionState.elo} Â· ${StreakTier.forDays(progressionState.streakDays).label}",
-                style = MaterialTheme.typography.bodySmall,
-                color = SplitSignalColors.TextSecondary,
-                maxLines = 1,
-            )
-        }
-
-        FlowRow(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(SplitSignalColors.BgObsidian)
-                .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(10.dp))
-                .padding(horizontal = 8.dp, vertical = 5.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            StatusMetricChip(
-                icon = Icons.Rounded.LocalFireDepartment,
-                iconTint = SplitSignalColors.AccentIndigo,
-                value = "${progressionState.streakDays}d",
-                onClick = null,
-            )
-            StatusMetricChip(
-                icon = Icons.Rounded.MonetizationOn,
-                iconTint = SplitSignalColors.AccentIndigo,
-                value = "${progressionState.coins}",
-                onClick = null,
-            )
-            StatusMetricChip(
-                icon = Icons.Rounded.Bolt,
-                iconTint = SplitSignalColors.AccentIndigo,
-                value = "${progressionState.xp}",
-                onClick = null,
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatusMetricChip(
-    icon: ImageVector,
-    iconTint: Color,
-    value: String,
-    onClick: (() -> Unit)?,
-) {
-    val baseModifier = Modifier
-        .clip(RoundedCornerShape(6.dp))
-        .let { mod ->
-            if (onClick != null) {
-                mod
-                    .pointerHoverIcon(PointerIcon.Hand)
-                    .clickable(role = Role.Button, onClick = onClick)
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-            } else {
-                mod.padding(horizontal = 2.dp, vertical = 2.dp)
-            }
-        }
-
-    Row(
-        modifier = baseModifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = iconTint,
-            modifier = Modifier.size(15.dp),
-        )
-        Text(
-            text = value,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            color = SplitSignalColors.TextPrimary,
-            maxLines = 1,
-        )
-    }
-}
-
-@Composable
-private fun DailySprintHeroCard(
-    progressionState: ProgressionState,
-    onPlayDailySprint: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val tier = StreakTier.forDays(progressionState.streakDays)
-    val filledSegments = if (progressionState.dailyCompletedToday) {
-        10
-    } else {
-        (progressionState.streakDays % 10).let { mod ->
-            if (mod == 0 && progressionState.streakDays > 0) 9 else mod
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(SplitSignalColors.CardSlate)
-            .border(1.dp, SplitSignalColors.AccentEmerald.copy(alpha = 0.45f), RoundedCornerShape(14.dp))
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "DAILY SPRINT",
-                style = MaterialTheme.typography.labelSmall,
-                color = SplitSignalColors.AccentEmerald,
-            )
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(SplitSignalColors.BgObsidian)
-                    .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 8.dp, vertical = 3.dp),
-            ) {
-                Text(
-                    text = "${tier.label} Â· ${progressionState.streakFreezes} Freeze",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = SplitSignalColors.TextSecondary,
-                )
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (progressionState.dailyCompletedToday) {
-                Icon(
-                    imageVector = Icons.Rounded.CheckCircle,
-                    contentDescription = null,
-                    tint = SplitSignalColors.AccentEmerald,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            Text(
-                text = if (progressionState.dailyCompletedToday) {
-                    "Daily Sprint Complete"
-                } else {
-                    "Solve 1 board to keep ${progressionState.streakDays}d streak"
-                },
-                style = MaterialTheme.typography.titleMedium,
-                color = if (progressionState.dailyCompletedToday) {
-                    SplitSignalColors.AccentEmerald
-                } else {
-                    SplitSignalColors.TextPrimary
-                },
-            )
-        }
-
-        SegmentedProgressBar(
-            filledSegments = filledSegments,
-            totalSegments = 10,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        HubPrimaryButton(
-            label = "PLAY DAILY SPRINT (6Ã—6)",
-            onClick = onPlayDailySprint,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun SegmentedProgressBar(
-    filledSegments: Int,
-    totalSegments: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(SplitSignalColors.BgObsidian)
-            .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(8.dp))
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        for (segment in 0 until totalSegments) {
-            val isFilled = segment < filledSegments
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(10.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        if (isFilled) {
-                            SplitSignalColors.AccentEmerald
-                        } else {
-                            SplitSignalColors.TileSurface
-                        },
-                    ),
-            )
-        }
-    }
-}
-
-@Composable
-private fun WifiRaceCard(
-    onHostRace: () -> Unit,
-    onJoinRace: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(SplitSignalColors.CardSlate)
-            .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(14.dp))
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "1v1 LOCAL WI-FI RACE",
-                style = MaterialTheme.typography.labelSmall,
-                color = SplitSignalColors.AccentEmerald,
-            )
-            Icon(
-                imageVector = Icons.Rounded.Wifi,
-                contentDescription = null,
-                tint = SplitSignalColors.AccentEmerald,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = "Same board Â· Live opponent progress bar",
-                style = MaterialTheme.typography.titleMedium,
-                color = SplitSignalColors.TextPrimary,
-            )
-            Text(
-                text = "Auto-discovery on local Wi-Fi Â· Ink sabotage every 15 cells",
-                style = MaterialTheme.typography.bodySmall,
-                color = SplitSignalColors.TextSecondary,
-            )
-        }
-
-        HorizontalDivider(color = SplitSignalColors.BorderHairline, thickness = 1.dp)
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            HubPrimaryButton(
-                label = "HOST RACE",
-                onClick = onHostRace,
-                modifier = Modifier.weight(1f),
-            )
-            HubSecondaryButton(
-                label = "JOIN RACE",
-                onClick = onJoinRace,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SoloPracticeAndVaultCard(
-    progressionState: ProgressionState,
-    selectedDifficulty: SudokuDifficulty,
-    onSelectDifficulty: (SudokuDifficulty) -> Unit,
-    onPlaySolo: (SudokuSize, SudokuDifficulty) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(SplitSignalColors.CardSlate)
-            .border(1.dp, SplitSignalColors.BorderHairline, RoundedCornerShape(14.dp))
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "SOLO PRACTICE",
-                style = MaterialTheme.typography.labelSmall,
-                color = SplitSignalColors.AccentEmerald,
-            )
-            Text(
-                text = "${progressionState.hintTokens} Hints Â· ${progressionState.solvedCount} Solved",
-                style = MaterialTheme.typography.bodySmall,
-                color = SplitSignalColors.TextSecondary,
-            )
-        }
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            for (difficulty in SudokuDifficulty.entries) {
-                HubPillButton(
-                    label = difficulty.label,
-                    accentColor = SplitSignalColors.AccentEmerald,
-                    isProminent = selectedDifficulty == difficulty,
-                    onClick = { onSelectDifficulty(difficulty) },
-                )
-            }
-        }
-
-        HorizontalDivider(color = SplitSignalColors.BorderHairline, thickness = 1.dp)
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            HubSecondaryButton(
-                label = "6Ã—6 Sprint",
-                onClick = { onPlaySolo(SudokuSize.SPRINT_6X6, selectedDifficulty) },
-                modifier = Modifier.weight(1f),
-            )
-            HubSecondaryButton(
-                label = "9A-9 Classic",
-                onClick = { onPlaySolo(SudokuSize.CLASSIC_9X9, selectedDifficulty) },
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
 
 @Composable
 private fun HostRoomPanel(
@@ -1577,409 +1361,4 @@ private fun HubSecondaryButton(
     }
 }
 
-@Composable
-private fun MatiksTopStatusPill(
-    progressionState: ProgressionState,
-    onOpenStatsProfile: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LinearCard(
-        modifier = modifier,
-        contentPadding = 14.dp,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    text = "SplitSignal",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = SplitSignalColors.TextPrimary,
-                )
-                Text(
-                    text = "${progressionState.streakDays}d Streak Â· ${progressionState.coins} Coins Â· ${progressionState.elo} Elo",
-                    style = LinearTextStyles.TabularLabel.copy(fontSize = 12.sp),
-                    color = SplitSignalColors.TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MatiksChipButton(
-                    label = progressionState.league.title.substringBefore(" "),
-                    accentColor = SplitSignalColors.AccentIndigo,
-                    onClick = onOpenStatsProfile,
-                )
-            }
-        }
-    }
-}
 
-@Composable
-private fun DailyWorkoutHeroCard(
-    progressionState: ProgressionState,
-    onStartWorkout: () -> Unit,
-    onPlayDailySudoku: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val steps = listOf("Cross Math", "Math Maze", "KenKen", "Mindsnap")
-    val completed = progressionState.dailyStepsCompleted.coerceIn(0, 4)
-    val closureTarget = (0.25f + (completed / 4f) * 0.75f).coerceIn(0.25f, 1f)
-    val closureSweep by animateFloatAsState(
-        targetValue = closureTarget,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-        label = "GestaltClosureSweep",
-    )
-    val closurePercent = (closureTarget * 100f).toInt()
-    val streakDays = progressionState.streakDays
-    val tier1Unlocked = streakDays >= 7
-    val tier2Unlocked = streakDays >= 30
-
-    LinearCard(
-        modifier = modifier,
-        borderColor = SplitSignalColors.BorderFocus,
-        contentPadding = 16.dp,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Gestalt Closure Ring (25% Goal Gradient baseline -> 100%)
-                Box(
-                    modifier = Modifier.size(58.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        drawArc(
-                            color = SplitSignalColors.SurfaceTile,
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round),
-                        )
-                        drawArc(
-                            color = if (completed >= 4) {
-                                SplitSignalColors.AccentEmerald
-                            } else {
-                                SplitSignalColors.AccentIndigo
-                            },
-                            startAngle = -90f,
-                            sweepAngle = 360f * closureSweep,
-                            useCenter = false,
-                            style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round),
-                        )
-                    }
-                    Text(
-                        text = "$closurePercent%",
-                        style = LinearTextStyles.TabularDigit.copy(fontSize = 12.sp),
-                        color = if (completed >= 4) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        text = "DAILY WORKOUT",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = SplitSignalColors.AccentIndigo,
-                    )
-                    Text(
-                        text = if (progressionState.dailyCompletedToday) "Daily Loop Complete" else "4-Step Brain Workout ($completed/4)",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = SplitSignalColors.TextPrimary,
-                    )
-                }
-            }
-            MatiksChipButton(
-                label = "6×6 Daily",
-                accentColor = SplitSignalColors.AccentIndigo,
-                onClick = onPlayDailySudoku,
-            )
-        }
-
-        // Diamond Tier 1 (7d) & Tier 2 (30d) streak milestone indicator
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        if (tier1Unlocked) {
-                            SplitSignalColors.AccentEmerald.copy(alpha = 0.14f)
-                        } else {
-                            SplitSignalColors.SurfaceTile
-                        },
-                    )
-                    .border(
-                        1.dp,
-                        if (tier1Unlocked) SplitSignalColors.AccentEmerald.copy(alpha = 0.5f) else SplitSignalColors.BorderSubtle,
-                        RoundedCornerShape(8.dp),
-                    )
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-            ) {
-                Text(
-                    text = if (tier1Unlocked) {
-                        "Diamond Tier 1 (7d)"
-                    } else {
-                        "Diamond Tier 1 (7d) Â· ${streakDays.coerceAtMost(7)}/7d"
-                    },
-                    style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                    color = if (tier1Unlocked) SplitSignalColors.AccentEmerald else SplitSignalColors.TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        if (tier2Unlocked) {
-                            SplitSignalColors.AccentIndigo.copy(alpha = 0.18f)
-                        } else {
-                            SplitSignalColors.SurfaceTile
-                        },
-                    )
-                    .border(
-                        1.dp,
-                        if (tier2Unlocked) SplitSignalColors.AccentIndigo.copy(alpha = 0.6f) else SplitSignalColors.BorderSubtle,
-                        RoundedCornerShape(8.dp),
-                    )
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-            ) {
-                Text(
-                    text = if (tier2Unlocked) {
-                        "Tier 2 (30d)"
-                    } else {
-                        "Tier 2 (30d) Â· ${streakDays.coerceAtMost(30)}/30d"
-                    },
-                    style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                    color = if (tier2Unlocked) SplitSignalColors.AccentIndigo else SplitSignalColors.TextMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            steps.forEachIndexed { idx, label ->
-                val done = idx < completed
-                val current = idx == completed && !progressionState.dailyCompletedToday
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            when {
-                                done -> SplitSignalColors.AccentEmerald.copy(alpha = 0.16f)
-                                current -> SplitSignalColors.AccentIndigo.copy(alpha = 0.16f)
-                                else -> SplitSignalColors.BgCanvas
-                            },
-                        )
-                        .border(
-                            1.dp,
-                            when {
-                                done -> SplitSignalColors.AccentEmerald
-                                current -> SplitSignalColors.AccentIndigo
-                                else -> SplitSignalColors.BorderSubtle
-                            },
-                            RoundedCornerShape(8.dp),
-                        )
-                        .padding(vertical = 8.dp, horizontal = 4.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (done) {
-                            SsIcon(
-                                icon = SsIcons.MaterialCheck,
-                                contentDescription = "Done",
-                                tint = SplitSignalColors.AccentEmerald,
-                                iconSize = 9.dp,
-                            )
-                        }
-                        Text(
-                            text = label,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (done) SplitSignalColors.AccentEmerald else SplitSignalColors.TextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-            }
-        }
-
-        Button(
-            onClick = onStartWorkout,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = SplitSignalColors.AccentIndigo,
-                contentColor = SplitSignalColors.TextPrimary,
-            ),
-        ) {
-            Text(
-                text = when {
-                    progressionState.dailyCompletedToday -> "Replay Workout"
-                    completed > 0 -> "Continue Workout (${completed + 1}/4)"
-                    else -> "Start Workout"
-                },
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun LocalArenaDuelCard(
-    onHostDuel: (GameType) -> Unit,
-    onJoinRoom: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var selectedDuelMode by remember { mutableStateOf(GameType.CROSS_MATH) }
-    val arenaModes = listOf(
-        GameType.CROSS_MATH,
-        GameType.MINDSNAP,
-        GameType.MEMORY_MATRIX,
-        GameType.SUDOKU_6X6,
-        GameType.MATH_MAZE,
-        GameType.KENKEN,
-    )
-
-    LinearCard(
-        modifier = modifier,
-        contentPadding = 16.dp,
-    ) {
-        Text(
-            text = "1V1 LOCAL DUEL",
-            style = MaterialTheme.typography.labelSmall,
-            color = SplitSignalColors.TextSecondary,
-        )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            arenaModes.forEach { mode ->
-                HubPillButton(
-                    label = mode.displayName,
-                    accentColor = SplitSignalColors.AccentIndigo,
-                    isProminent = selectedDuelMode == mode,
-                    onClick = { selectedDuelMode = mode },
-                )
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Button(
-                onClick = { onHostDuel(selectedDuelMode) },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SplitSignalColors.AccentIndigo,
-                    contentColor = SplitSignalColors.TextPrimary,
-                ),
-            ) {
-                Text("Host Duel", fontWeight = FontWeight.SemiBold)
-            }
-            HubSecondaryButton(
-                label = "Join Nearby",
-                onClick = onJoinRoom,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun SixModesGridSection(
-    isWide: Boolean,
-    onPlayCrossMath: () -> Unit,
-    onPlayMathMaze: () -> Unit,
-    onPlayKenKen: () -> Unit,
-    onPlayMiniSudoku: () -> Unit,
-    onPlayMemoryMatrix: () -> Unit,
-    onPlayMindsnap: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val entries = listOf(
-        Triple("Cross Math", "3Ã—3 arithmetic crossword", onPlayCrossMath),
-        Triple("Math Maze", "Pathfind to target sum", onPlayMathMaze),
-        Triple("KenKen", "4Ã—4 arithmetic cages", onPlayKenKen),
-        Triple("Mini Sudoku", "6Ã—6 speed grid", onPlayMiniSudoku),
-        Triple("Memory Matrix", "2.0s flash & recall", onPlayMemoryMatrix),
-        Triple("Mindsnap Blitz", "60s rapid combo drill", onPlayMindsnap),
-    )
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = "PUZZLE MODES",
-            style = MaterialTheme.typography.labelSmall,
-            color = SplitSignalColors.TextSecondary,
-        )
-        val cols = if (isWide) 3 else 2
-        entries.chunked(cols).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                rowItems.forEach { (title, subtitle, onClick) ->
-                    TactileTile(
-                        onClick = onClick,
-                        backgroundColor = SplitSignalColors.SurfaceCard,
-                        cornerRadius = 14.dp,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = SplitSignalColors.TextPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                text = subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = SplitSignalColors.TextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-                if (rowItems.size < cols) {
-                    repeat(cols - rowItems.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
-    }
-}

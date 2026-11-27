@@ -448,6 +448,7 @@ fun SplitSignalApp(
                             )
                         },
                         onCycleAccent = resolvedHolder::cycleAvatarAccent,
+                        onClearData = resolvedHolder::clearLocalData,
                         onClose = { showSettingsModal = false },
                     )
                 }

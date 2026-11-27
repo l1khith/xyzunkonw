@@ -238,6 +238,16 @@ class UserIdentityStore(
         persistChatHistory()
     }
 
+    /**
+     * Resets cached friends, head-to-head records, and local chat messages.
+     */
+    fun clearLocalData() {
+        _friends.value = emptyList()
+        persistFriends(emptyList())
+        chatHistory.clear()
+        persistChatHistory()
+    }
+
     private fun loadIdentity(): UserIdentity {
         val raw = storage.readText(KEY_IDENTITY)
         if (raw != null) {

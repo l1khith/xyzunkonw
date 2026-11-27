@@ -5,6 +5,7 @@ import splitsignal.composeapp.generated.resources.Res
 import splitsignal.composeapp.generated.resources.ic_chevron_right
 import splitsignal.composeapp.generated.resources.ic_expand_less
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -72,7 +73,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -144,6 +148,33 @@ fun GamesHubScreen(
     ) {
         var expandedGameId by remember { mutableStateOf<String?>(null) }
 
+        val animBlock1 = remember { Animatable(0f) }
+        val animBlock2 = remember { Animatable(0f) }
+        val animBlock3 = remember { Animatable(0f) }
+
+        LaunchedEffect(Unit) {
+            launch {
+                animBlock1.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                )
+            }
+            delay(80)
+            launch {
+                animBlock2.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                )
+            }
+            delay(80)
+            launch {
+                animBlock3.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -154,7 +185,12 @@ fun GamesHubScreen(
         ) {
             // 1. TODAY'S DAILY WORKOUT CARD
             LinearCard(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = animBlock1.value
+                        translationY = (1f - animBlock1.value) * 36.dp.toPx()
+                    },
                 contentPadding = 16.dp,
             ) {
                 Row(
@@ -171,6 +207,17 @@ fun GamesHubScreen(
                             modifier = Modifier.size(52.dp),
                             contentAlignment = Alignment.Center,
                         ) {
+                            val targetFraction = if (progressionState.dailyCompletedToday) {
+                                1f
+                            } else {
+                                progressionState.dailyStepsCompleted.coerceIn(0, 4) / 4f
+                            }
+                            val animatedFraction by animateFloatAsState(
+                                targetValue = targetFraction,
+                                animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                                label = "DailyProgressFraction",
+                            )
+
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 drawArc(
                                     color = Color(0xFF1F2228),
@@ -179,15 +226,15 @@ fun GamesHubScreen(
                                     useCenter = false,
                                     style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
                                 )
-                                val completedFraction = (progressionState.dailyStepsCompleted.coerceIn(0, 4) / 4f)
-                                val sweepFraction = if (progressionState.dailyCompletedToday) 1f else (0.25f + completedFraction * 0.75f)
-                                drawArc(
-                                    color = if (progressionState.dailyCompletedToday) SplitSignalColors.AccentEmerald else SplitSignalColors.AccentIndigo,
-                                    startAngle = -90f,
-                                    sweepAngle = 360f * sweepFraction,
-                                    useCenter = false,
-                                    style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
-                                )
+                                if (animatedFraction > 0.005f) {
+                                    drawArc(
+                                        color = if (progressionState.dailyCompletedToday) SplitSignalColors.AccentEmerald else SplitSignalColors.AccentIndigo,
+                                        startAngle = -90f,
+                                        sweepAngle = 360f * animatedFraction,
+                                        useCenter = false,
+                                        style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
+                                    )
+                                }
                             }
                             Text(
                                 text = "${progressionState.dailyStepsCompleted}/4",
@@ -227,7 +274,12 @@ fun GamesHubScreen(
 
             // 2. 1V1 LOCAL ARENA DUEL CARD
             LinearCard(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = animBlock2.value
+                        translationY = (1f - animBlock2.value) * 36.dp.toPx()
+                    },
                 contentPadding = 16.dp,
             ) {
                 var selectedDuelMode by remember { mutableStateOf(GameType.SUDOKU_6X6) }
@@ -296,11 +348,20 @@ fun GamesHubScreen(
             }
 
             // 3. SOLO PRACTICE SECTION
-            Text(
-                text = "SOLO PRACTICE",
-                style = MaterialTheme.typography.labelSmall,
-                color = SplitSignalColors.TextSecondary,
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = animBlock3.value
+                        translationY = (1f - animBlock3.value) * 36.dp.toPx()
+                    },
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = "SOLO PRACTICE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = SplitSignalColors.TextSecondary,
+                )
 
             listOf(
                 HubGameItem("sudoku", "SUDOKU", "Classic 9x9 logic puzzle", SsIcons.SudokuGrid, "9×9", "+25 ELO"),
@@ -507,6 +568,7 @@ fun GamesHubScreen(
             }
         }
     }
+}
 }
 
 /**

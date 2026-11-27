@@ -404,6 +404,15 @@ class SplitSignalStateHolder(
     }
 
     /**
+     * Resets cached peers, saved friends list, chat history, and active invites.
+     */
+    fun clearLocalData() {
+        identityStore.clearLocalData()
+        chatSessionManager.clearPendingGameInvite()
+        lanDiscovery.stopBroadcasting()
+    }
+
+    /**
      * Removes the friend matching [userId] and closes the chat sheet if currently open for them.
      */
     fun removeFriend(userId: String) {

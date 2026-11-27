@@ -619,13 +619,15 @@ private fun FileTransferCard(
                         Icon(
                             imageVector = Icons.Rounded.Check,
                             contentDescription = "Completed",
-                            tint = Color(0xFFF7F8F8),
+                            tint = SplitSignalColors.AccentEmerald,
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
                             text = "${formatByteSize(transfer.fileSizeBytes)} · Saved to Downloads",
-                            style = LinearTextStyles.TabularLabel.copy(fontSize = 11.sp),
-                            color = SplitSignalColors.TextSecondary,
+                            style = LinearTextStyles.TabularLabel.copy(
+                                fontSize = 11.sp,
+                                color = SplitSignalColors.AccentEmerald,
+                            ),
                             modifier = Modifier.weight(1f),
                         )
                         // Share chip

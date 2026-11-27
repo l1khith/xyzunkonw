@@ -311,15 +311,14 @@ fun GamesHubScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         duelModes.forEach { mode ->
-                            HubPillButton(
+                            HubSegmentPill(
                                 label = when (mode) {
                                     GameType.SUDOKU_6X6 -> "Sudoku"
                                     GameType.CROSS_MATH -> "Cross Math"
                                     GameType.KENKEN -> "KenKen"
                                     else -> "Mindsnap"
                                 },
-                                accentColor = SplitSignalColors.AccentIndigo,
-                                isProminent = selectedDuelMode == mode,
+                                isSelected = selectedDuelMode == mode,
                                 onClick = { selectedDuelMode = mode },
                                 modifier = Modifier.weight(1f),
                             )
@@ -1354,6 +1353,53 @@ private fun HubPillButton(
             text = label,
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = if (isProminent) FontWeight.SemiBold else FontWeight.Medium,
+            ),
+            color = textColor,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun HubSegmentPill(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered = interactionSource.collectIsHoveredAsState().value
+    val shape = RoundedCornerShape(8.dp)
+
+    val bg = when {
+        isSelected -> Color(0xFF282C34)
+        isHovered -> Color(0xFF1E2126)
+        else -> Color(0xFF141619)
+    }
+    val border = if (isSelected) SplitSignalColors.BorderFocus else SplitSignalColors.BorderSubtle
+    val textColor = if (isSelected) Color.White else SplitSignalColors.TextSecondary
+
+    Box(
+        modifier = modifier
+            .height(34.dp)
+            .clip(shape)
+            .background(bg)
+            .border(1.dp, border, shape)
+            .hoverable(interactionSource = interactionSource)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                role = Role.Tab,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                fontSize = 12.sp,
             ),
             color = textColor,
             maxLines = 1,

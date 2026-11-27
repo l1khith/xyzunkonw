@@ -310,7 +310,7 @@ class JvmLanDiscovery(
 
         val status = PeerStatus.fromCode(parts[5]) ?: return null
 
-        val elo = if (parts.size == 9) parts[6].trim().toIntOrNull() ?: 1200 else 1200
+        val elo = if (parts.size == 9) parts[6].trim().toIntOrNull() ?: 0 else 0
         val streakDays = if (parts.size == 9) parts[7].trim().toIntOrNull() ?: 0 else 0
         val topTrophy = if (parts.size == 9) parts[8].trim() else ""
 

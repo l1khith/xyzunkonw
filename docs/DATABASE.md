@@ -82,7 +82,7 @@ erDiagram
 | `streakFreezes` | `Int` | `1` | Available consumable streak shield inventory |
 | `coins` | `Int` | `250` | In-game currency balance |
 | `xp` | `Int` | `840` | Total lifetime experience points |
-| `elo` | `Int` | `1200` | Current competitive rating (starts at 1200) |
+| `elo` | `Int` | `0` | Current competitive rating (starts at 0) |
 | `solvedCount` | `Int` | `12` | Total lifetime puzzles solved |
 | `duelWins` | `Int` | `3` | Total 1v1 LAN duel victories |
 | `totalMatches` | `Int` | `12` | Total competitive duel matches played |

@@ -30,7 +30,7 @@ enum class StreakTier(
 }
 
 /**
- * Competitive Elo skill leagues from Bronze Tactician (1200) to Grandmaster (2100+).
+ * Competitive Elo skill leagues from Bronze Tactician (0) to Grandmaster (2100+).
  */
 enum class EloLeague(
     val title: String,
@@ -113,7 +113,7 @@ data class ProgressionState(
     val streakFreezes: Int = 1,
     val coins: Int = 0,
     val xp: Int = 0,
-    val elo: Int = 1200,
+    val elo: Int = 0,
     val solvedCount: Int = 0,
     val duelWins: Int = 0,
     val totalMatches: Int = 0,

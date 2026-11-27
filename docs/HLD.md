@@ -85,7 +85,7 @@ graph TD
 - **Co-op Asymmetric Deduction:** 2-player asymmetrical puzzle (Operator Number Grid + Analyst Clue Sheet).
 
 ### 4.3 Progression & Economy System
-- **Elo Rating:** Competitive skill rating starting at 1200 Elo scaling across 5 leagues (`Bronze Tactician` to `Grandmaster`).
+- **Elo Rating:** Competitive skill rating starting at 0 Elo scaling across 5 leagues (`Bronze Tactician` to `Grandmaster`).
 - **Currency & Streaks:** Coins and XP earned from solves, flawless runs, and speed bonuses.
 - **The Vault:** Consumables (Streak Freezes, Hint Tokens) and Board Themes (`Obsidian Dark`, `Paper Ivory`, `Monochrome Slate`).
 

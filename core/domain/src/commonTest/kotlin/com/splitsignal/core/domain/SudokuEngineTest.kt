@@ -268,7 +268,7 @@ class SudokuEngineTest {
                 streakDays = 6,
                 coins = 250,
                 xp = 840,
-                elo = 1200,
+                elo = 0,
                 solvedCount = 12,
                 duelWins = 3,
                 totalMatches = 12,

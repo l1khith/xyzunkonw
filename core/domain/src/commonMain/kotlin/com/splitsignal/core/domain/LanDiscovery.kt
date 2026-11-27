@@ -80,7 +80,7 @@ data class DiscoveredPeer(
     val hostIp: String,
     val ktorPort: Int,
     val status: PeerStatus,
-    val elo: Int = 1200,
+    val elo: Int = 0,
     val streakDays: Int = 0,
     val topTrophy: String = "",
 )
@@ -107,7 +107,7 @@ interface LanDiscovery {
         displayName: String,
         ktorPort: Int,
         status: PeerStatus,
-        elo: Int = 1200,
+        elo: Int = 0,
         streakDays: Int = 0,
         topTrophy: String = "",
     ) {}

@@ -18,7 +18,7 @@ data class FriendRecord(
     val lastSeenEpochMs: Long,
     val duelWins: Int = 0,
     val duelLosses: Int = 0,
-    val elo: Int = 1200,
+    val elo: Int = 0,
     val streakDays: Int = 0,
     val topTrophy: String = "",
 )

@@ -131,7 +131,7 @@ class MatiksEnginesTest {
     @Test
     fun progressionStoreTracksEloLeaguesAndDailyWorkout() {
         val store = ProgressionStore()
-        assertEquals(1200, store.state.value.elo)
+        assertEquals(0, store.state.value.elo)
         assertEquals(EloLeague.BRONZE, store.state.value.league)
 
         val reward = store.recordModeSolve(

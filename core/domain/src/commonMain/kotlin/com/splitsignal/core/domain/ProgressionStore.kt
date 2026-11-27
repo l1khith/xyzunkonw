@@ -113,7 +113,7 @@ data class ProgressionState(
     val streakFreezes: Int = 1,
     val coins: Int = 0,
     val xp: Int = 0,
-    val elo: Int = 0,
+    val elo: Int = 1200,
     val solvedCount: Int = 0,
     val duelWins: Int = 0,
     val totalMatches: Int = 0,

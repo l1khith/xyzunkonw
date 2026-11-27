@@ -263,7 +263,17 @@ class SudokuEngineTest {
 
     @Test
     fun progressionStoreCalculatesRewardsExtendsStreakAndHandlesShopPurchases() {
-        val store = ProgressionStore()
+        val store = ProgressionStore(
+            initialState = ProgressionState(
+                streakDays = 6,
+                coins = 250,
+                xp = 840,
+                elo = 1200,
+                solvedCount = 12,
+                duelWins = 3,
+                totalMatches = 12,
+            )
+        )
         val initial = store.state.value
         assertEquals(6, initial.streakDays)
         assertEquals(250, initial.coins)
